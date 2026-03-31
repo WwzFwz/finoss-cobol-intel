@@ -9,6 +9,13 @@ from cobol_intel.contracts.governance import AuditEvent
 from cobol_intel.contracts.manifest import RunError, RunStatus
 from cobol_intel.llm.backend import LLMBackend
 from cobol_intel.llm.explainer import explain_program
+from cobol_intel.llm.policy import (
+    PolicyViolationError,
+    effective_max_tokens_per_run,
+    effective_strict_mode,
+    enforce_model_policy,
+    load_policy_config,
+)
 from cobol_intel.outputs import write_json_artifact, write_text_artifact
 from cobol_intel.service.governance import (
     append_audit_event,
@@ -28,6 +35,9 @@ def explain_path(
     mode: ExplanationMode = ExplanationMode.TECHNICAL,
     output_dir: str | Path = "artifacts",
     copybook_dirs: list[str | Path] | None = None,
+    policy_config_path: str | Path | None = None,
+    strict_policy: bool | None = None,
+    max_tokens_per_run: int | None = None,
 ) -> tuple[AnalysisRunResult, list[ExplanationOutput]]:
     """Analyze COBOL file(s) and generate LLM explanations.
 
@@ -47,16 +57,55 @@ def explain_path(
     explanations: list[ExplanationOutput] = []
     successful = [r for r in run_result.parse_results if r.success]
     audit_log_path = initialize_audit_log(run_result.manifest, run_result.run_dir)
+    policy_config = load_policy_config(policy_config_path)
+    strict_policy_enabled = effective_strict_mode(policy_config, strict_policy)
+    token_budget = effective_max_tokens_per_run(policy_config, max_tokens_per_run)
+    run_result.manifest.governance.strict_policy_enforced = strict_policy_enabled
+    run_result.manifest.governance.max_tokens_per_run = token_budget
+    consumed_tokens = 0
 
     # Build call graph reference (already computed, extract from artifact)
     from cobol_intel.analysis.call_graph import build_call_graph
     call_graph = build_call_graph(successful)
 
     for i, result in enumerate(successful):
+        if token_budget is not None and consumed_tokens >= token_budget:
+            run_result.manifest.governance.budget_exhausted = True
+            message = (
+                f"Token budget exhausted before explaining {result.file_path}: "
+                f"{consumed_tokens}/{token_budget} tokens used."
+            )
+            run_result.manifest.warnings.append(message)
+            run_result.manifest.errors.append(
+                RunError(file=result.file_path, module="budget", message=message)
+            )
+            append_audit_event(
+                audit_log_path,
+                AuditEvent(
+                    event_type="llm.explain.skipped_budget",
+                    run_id=run_result.manifest.run_id,
+                    actor=default_actor(),
+                    status="skipped",
+                    backend=backend.name,
+                    model=backend.model_id,
+                    file_path=result.file_path,
+                    program_id=result.program_id,
+                    details={
+                        "tokens_used": consumed_tokens,
+                        "token_budget": token_budget,
+                    },
+                ),
+            )
+            break
+
         ast_output = to_ast_output(result, file_path=result.file_path)
         rules_output = run_result.rules_outputs[i] if i < len(run_result.rules_outputs) else None
         sensitivity = detect_ast_sensitivity(ast_output)
-        redaction_applied = should_redact_prompts(backend.name, sensitivity)
+        redaction_applied = should_redact_prompts(
+            backend.name,
+            sensitivity,
+            config=policy_config,
+        )
         append_audit_event(
             audit_log_path,
             AuditEvent(
@@ -73,6 +122,13 @@ def explain_path(
         )
 
         try:
+            enforce_model_policy(
+                backend_name=backend.name,
+                model_id=backend.model_id,
+                sensitivity=sensitivity,
+                config=policy_config,
+                strict_mode=strict_policy_enabled,
+            )
             explanation = explain_program(
                 backend=backend,
                 ast=ast_output,
@@ -82,6 +138,7 @@ def explain_path(
                 prompt_transform=redact_prompt_text if redaction_applied else None,
             )
             explanations.append(explanation)
+            consumed_tokens += explanation.tokens_used
 
             artifact_name = _slugify(result.program_id or Path(result.file_path).stem)
             json_rel = Path("docs") / f"{artifact_name}_explanation.json"
@@ -98,6 +155,9 @@ def explain_path(
                 sensitivity=sensitivity,
                 total_tokens=explanation.tokens_used,
                 redaction_applied=redaction_applied,
+                strict_policy_enforced=strict_policy_enabled,
+                max_tokens_per_run=token_budget,
+                config=policy_config,
             )
             append_audit_event(
                 audit_log_path,
@@ -115,19 +175,47 @@ def explain_path(
                         "tokens_used": explanation.tokens_used,
                         "mode": mode.value,
                         "redaction_applied": redaction_applied,
+                        "token_budget": token_budget,
                     },
                 ),
             )
+            if token_budget is not None and consumed_tokens >= token_budget:
+                run_result.manifest.governance.budget_exhausted = True
+                budget_message = (
+                    f"Token budget reached after {result.file_path}: "
+                    f"{consumed_tokens}/{token_budget} tokens used. "
+                    "Additional explanations were skipped."
+                )
+                run_result.manifest.warnings.append(budget_message)
+                append_audit_event(
+                    audit_log_path,
+                    AuditEvent(
+                        event_type="llm.explain.budget_reached",
+                        run_id=run_result.manifest.run_id,
+                        actor=default_actor(),
+                        status="warning",
+                        backend=backend.name,
+                        model=backend.model_id,
+                        file_path=result.file_path,
+                        program_id=result.program_id,
+                        details={
+                            "tokens_used": consumed_tokens,
+                            "token_budget": token_budget,
+                        },
+                    ),
+                )
+                break
         except Exception as exc:
+            module_name = "policy" if isinstance(exc, PolicyViolationError) else "llm"
             run_result.manifest.errors.append(
                 RunError(
                     file=result.file_path,
-                    module="llm",
+                    module=module_name,
                     message=str(exc),
                 )
             )
             run_result.manifest.warnings.append(
-                f"LLM explanation failed for {result.file_path}: {exc}"
+                f"{module_name.upper()} explanation failed for {result.file_path}: {exc}"
             )
             append_audit_event(
                 audit_log_path,
@@ -141,7 +229,7 @@ def explain_path(
                     file_path=result.file_path,
                     program_id=result.program_id,
                     sensitivity=sensitivity,
-                    details={"error": str(exc), "mode": mode.value},
+                    details={"error": str(exc), "mode": mode.value, "token_budget": token_budget},
                 ),
             )
 

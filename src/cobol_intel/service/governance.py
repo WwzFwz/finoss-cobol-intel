@@ -15,8 +15,7 @@ from cobol_intel.contracts.governance import (
     TokenUsageSummary,
 )
 from cobol_intel.contracts.manifest import Manifest
-from cobol_intel.contracts.governance import DeploymentTier
-from cobol_intel.llm.policy import evaluate_model_policy
+from cobol_intel.llm.policy import PolicyConfig, evaluate_model_policy
 from cobol_intel.outputs import write_jsonl_artifact
 
 _RESTRICTED_PATTERNS = (
@@ -46,6 +45,12 @@ _MODERATE_PATTERNS = (
     "interest",
     "loan",
 )
+_FIELD_TOKEN_PATTERN = re.compile(
+    r"\b[A-Z0-9-]*(ACCOUNT|ACCT|CARD|PAN|SSN|SOC-SEC|DOB|BIRTH|NAME|EMAIL|PHONE|IBAN)[A-Z0-9-]*\b"
+)
+_EMAIL_PATTERN = re.compile(r"\b[\w.+-]+@[\w.-]+\.\w+\b", re.IGNORECASE)
+_PHONE_PATTERN = re.compile(r"\b(?:\+?\d[\d -]{7,}\d)\b")
+_SSN_PATTERN = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 
 
 def default_actor(channel: str = "cli") -> AuditActor:
@@ -81,7 +86,10 @@ def detect_ast_sensitivity(ast: ASTOutput) -> DataSensitivity:
 def redact_prompt_text(text: str) -> str:
     """Mask obvious identifiers before sending content to cloud providers."""
     redacted = re.sub(r"\b\d{10,19}\b", "[REDACTED-NUMERIC-ID]", text)
-    redacted = re.sub(r"\b[A-Z]{2,10}-ACCOUNT(?:-NO|-NUMBER)?\b", "[REDACTED-FIELD]", redacted)
+    redacted = _FIELD_TOKEN_PATTERN.sub("[REDACTED-FIELD]", redacted)
+    redacted = _EMAIL_PATTERN.sub("[REDACTED-EMAIL]", redacted)
+    redacted = _SSN_PATTERN.sub("[REDACTED-SSN]", redacted)
+    redacted = _PHONE_PATTERN.sub("[REDACTED-PHONE]", redacted)
     return redacted
 
 
@@ -97,14 +105,24 @@ def apply_llm_governance(
     sensitivity: DataSensitivity,
     total_tokens: int,
     redaction_applied: bool = False,
+    strict_policy_enforced: bool = False,
+    max_tokens_per_run: int | None = None,
+    config: PolicyConfig | None = None,
 ) -> GovernanceSummary:
     """Update manifest governance metadata after an explain run."""
-    deployment_tier, warnings = evaluate_model_policy(backend_name, model_id, sensitivity)
+    deployment_tier, warnings = evaluate_model_policy(
+        backend_name,
+        model_id,
+        sensitivity,
+        config=config,
+    )
     manifest.governance.data_sensitivity = sensitivity
     manifest.governance.approved_backend = backend_name
     manifest.governance.approved_model = model_id
     manifest.governance.deployment_tier = deployment_tier
+    manifest.governance.strict_policy_enforced = strict_policy_enforced
     manifest.governance.redaction_applied = manifest.governance.redaction_applied or redaction_applied
+    manifest.governance.max_tokens_per_run = max_tokens_per_run
     manifest.governance.policy_warnings.extend(warnings)
     manifest.governance.token_usage.requests += 1
     manifest.governance.token_usage.total_tokens += total_tokens
@@ -114,10 +132,14 @@ def apply_llm_governance(
     return manifest.governance
 
 
-def should_redact_prompts(backend_name: str, sensitivity: DataSensitivity) -> bool:
+def should_redact_prompts(
+    backend_name: str,
+    sensitivity: DataSensitivity,
+    config: PolicyConfig | None = None,
+) -> bool:
     """Cloud providers get redacted prompts for sensitive workloads."""
-    deployment_tier, _ = evaluate_model_policy(backend_name, "", sensitivity)
-    return deployment_tier == DeploymentTier.CLOUD and sensitivity in {
+    deployment_tier, _ = evaluate_model_policy(backend_name, "", sensitivity, config=config)
+    return deployment_tier.value == "cloud" and sensitivity in {
         DataSensitivity.HIGH,
         DataSensitivity.RESTRICTED,
     }

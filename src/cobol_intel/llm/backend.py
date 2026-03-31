@@ -6,8 +6,12 @@ See ADR-003 in docs/DECISIONS.md.
 
 from __future__ import annotations
 
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Callable, TypeVar
+
+_T = TypeVar("_T")
 
 
 @dataclass
@@ -51,3 +55,27 @@ class LLMBackend(ABC):
     def model_id(self) -> str:
         """Model identifier used by this backend."""
         ...
+
+
+def retry_operation(
+    operation: Callable[[], _T],
+    *,
+    max_retries: int,
+    retry_delay_seconds: float,
+) -> _T:
+    """Run an operation with a small bounded retry loop."""
+    attempts = max_retries + 1
+    last_error: Exception | None = None
+
+    for attempt in range(attempts):
+        try:
+            return operation()
+        except Exception as exc:  # pragma: no cover - exercised through backend tests
+            last_error = exc
+            if attempt >= max_retries:
+                break
+            if retry_delay_seconds > 0:
+                time.sleep(retry_delay_seconds)
+
+    assert last_error is not None
+    raise last_error

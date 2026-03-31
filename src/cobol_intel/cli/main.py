@@ -24,6 +24,9 @@ def analyze(
     model: str = typer.Option("none", "--model", "-m", help="LLM backend: claude, openai, ollama, none"),
     mode: str = typer.Option("technical", "--mode", help="Explanation mode: technical, business, audit"),
     copybook_dir: list[str] = typer.Option(None, "--copybook-dir", help="Directory containing COPYBOOK files"),
+    policy_config: str | None = typer.Option(None, "--policy-config", help="Optional JSON policy config path"),
+    strict_policy: bool = typer.Option(False, "--strict-policy", help="Hard block policy violations during explain"),
+    max_tokens_per_run: int | None = typer.Option(None, "--max-tokens-per-run", help="Optional token cap for one explain run"),
 ) -> None:
     """Analyze a COBOL program or directory and produce artifacts."""
     dirs = copybook_dir or _default_copybook_dirs(path)
@@ -37,6 +40,9 @@ def analyze(
             path=path, backend=backend,
             mode=ExplanationMode(mode), output_dir=output_dir,
             copybook_dirs=dirs,
+            policy_config_path=policy_config,
+            strict_policy=True if strict_policy else None,
+            max_tokens_per_run=max_tokens_per_run,
         )
         typer.echo(f"[cobol-intel] analyze+explain: {path} via {model}")
         typer.echo(f"Programs explained: {len(explanations)}")
@@ -58,6 +64,9 @@ def explain(
     model: str = typer.Option("claude", "--model", "-m", help="LLM backend: claude, openai, ollama"),
     mode: str = typer.Option("technical", "--mode", help="Explanation mode: technical, business, audit"),
     copybook_dir: list[str] = typer.Option(None, "--copybook-dir", help="Directory containing COPYBOOK files"),
+    policy_config: str | None = typer.Option(None, "--policy-config", help="Optional JSON policy config path"),
+    strict_policy: bool = typer.Option(False, "--strict-policy", help="Hard block policy violations during explain"),
+    max_tokens_per_run: int | None = typer.Option(None, "--max-tokens-per-run", help="Optional token cap for one explain run"),
 ) -> None:
     """Explain what a COBOL program does using an LLM backend."""
     from cobol_intel.contracts.explanation_output import ExplanationMode
@@ -72,6 +81,9 @@ def explain(
         mode=explanation_mode,
         output_dir=output_dir,
         copybook_dirs=copybook_dir or _default_copybook_dirs(path),
+        policy_config_path=policy_config,
+        strict_policy=True if strict_policy else None,
+        max_tokens_per_run=max_tokens_per_run,
     )
     typer.echo(f"[cobol-intel] explain: {path} via {model} ({mode} mode)")
     typer.echo(f"Run ID: {run_result.manifest.run_id}")

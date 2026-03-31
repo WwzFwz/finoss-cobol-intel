@@ -54,6 +54,9 @@ class GovernanceSummary(BaseModel):
     approved_backend: str | None = None
     approved_model: str | None = None
     deployment_tier: DeploymentTier = DeploymentTier.HYBRID
+    strict_policy_enforced: bool = False
     redaction_applied: bool = False
+    max_tokens_per_run: int | None = None
+    budget_exhausted: bool = False
     policy_warnings: list[str] = Field(default_factory=list)
     token_usage: TokenUsageSummary = Field(default_factory=TokenUsageSummary)
