@@ -1,0 +1,222 @@
+{
+  "schema_version": "1.0",
+  "program_id": "PAYMENT",
+  "file_path": "samples/complex/payment.cbl",
+  "rules": [
+    {
+      "rule_id": "R001",
+      "type": "IF",
+      "condition": "STATUS-OK",
+      "actions": [
+        "PERFORM",
+        "PERFORM"
+      ],
+      "paragraph": "MAIN-PROGRAM",
+      "source": {
+        "file": "samples/complex/payment.cbl",
+        "paragraph": "MAIN-PROGRAM",
+        "lines": null,
+        "module": null
+      }
+    },
+    {
+      "rule_id": "R002",
+      "type": "IF",
+      "condition": "WS-DATE-VALID=\"N\"",
+      "actions": [
+        "MOVE",
+        "MOVE",
+        "CALL",
+        "IF"
+      ],
+      "paragraph": "VALIDATE-PAYMENT",
+      "source": {
+        "file": "samples/complex/payment.cbl",
+        "paragraph": "VALIDATE-PAYMENT",
+        "lines": null,
+        "module": null
+      }
+    },
+    {
+      "rule_id": "R003",
+      "type": "IF",
+      "condition": "WS-BALANCE-OK=\"N\"",
+      "actions": [
+        "MOVE",
+        "MOVE",
+        "MOVE"
+      ],
+      "paragraph": "VALIDATE-PAYMENT",
+      "source": {
+        "file": "samples/complex/payment.cbl",
+        "paragraph": "VALIDATE-PAYMENT",
+        "lines": null,
+        "module": null
+      }
+    },
+    {
+      "rule_id": "R004",
+      "type": "EVALUATE",
+      "condition": "EVALUATE TRUE",
+      "actions": [
+        "IF",
+        "MOVE",
+        "MOVE",
+        "MOVE"
+      ],
+      "paragraph": "CALCULATE-FEE",
+      "source": {
+        "file": "samples/complex/payment.cbl",
+        "paragraph": "CALCULATE-FEE",
+        "lines": null,
+        "module": null
+      }
+    },
+    {
+      "rule_id": "R005",
+      "type": "IF",
+      "condition": "CURRENCY-IDR",
+      "actions": [
+        "COMPUTE",
+        "COMPUTE"
+      ],
+      "paragraph": "CALCULATE-FEE",
+      "source": {
+        "file": "samples/complex/payment.cbl",
+        "paragraph": "CALCULATE-FEE",
+        "lines": null,
+        "module": null
+      }
+    },
+    {
+      "rule_id": "R006",
+      "type": "CONDITION-88",
+      "condition": "CURRENCY-IDR = IDR",
+      "actions": [],
+      "paragraph": null,
+      "source": {
+        "file": "samples/complex/payment.cbl",
+        "paragraph": null,
+        "lines": null,
+        "module": null
+      }
+    },
+    {
+      "rule_id": "R007",
+      "type": "CONDITION-88",
+      "condition": "CURRENCY-USD = USD",
+      "actions": [],
+      "paragraph": null,
+      "source": {
+        "file": "samples/complex/payment.cbl",
+        "paragraph": null,
+        "lines": null,
+        "module": null
+      }
+    },
+    {
+      "rule_id": "R008",
+      "type": "CONDITION-88",
+      "condition": "CURRENCY-SGD = SGD",
+      "actions": [],
+      "paragraph": null,
+      "source": {
+        "file": "samples/complex/payment.cbl",
+        "paragraph": null,
+        "lines": null,
+        "module": null
+      }
+    },
+    {
+      "rule_id": "R009",
+      "type": "CONDITION-88",
+      "condition": "PAY-TRANSFER = T",
+      "actions": [],
+      "paragraph": null,
+      "source": {
+        "file": "samples/complex/payment.cbl",
+        "paragraph": null,
+        "lines": null,
+        "module": null
+      }
+    },
+    {
+      "rule_id": "R010",
+      "type": "CONDITION-88",
+      "condition": "PAY-BILL = B",
+      "actions": [],
+      "paragraph": null,
+      "source": {
+        "file": "samples/complex/payment.cbl",
+        "paragraph": null,
+        "lines": null,
+        "module": null
+      }
+    },
+    {
+      "rule_id": "R011",
+      "type": "CONDITION-88",
+      "condition": "PAY-TOPUP = U",
+      "actions": [],
+      "paragraph": null,
+      "source": {
+        "file": "samples/complex/payment.cbl",
+        "paragraph": null,
+        "lines": null,
+        "module": null
+      }
+    },
+    {
+      "rule_id": "R012",
+      "type": "CONDITION-88",
+      "condition": "STATUS-OK = 00",
+      "actions": [],
+      "paragraph": null,
+      "source": {
+        "file": "samples/complex/payment.cbl",
+        "paragraph": null,
+        "lines": null,
+        "module": null
+      }
+    },
+    {
+      "rule_id": "R013",
+      "type": "CONDITION-88",
+      "condition": "STATUS-INSUF-BAL = 51",
+      "actions": [],
+      "paragraph": null,
+      "source": {
+        "file": "samples/complex/payment.cbl",
+        "paragraph": null,
+        "lines": null,
+        "module": null
+      }
+    },
+    {
+      "rule_id": "R014",
+      "type": "CONDITION-88",
+      "condition": "STATUS-INVALID-ACCT = 14",
+      "actions": [],
+      "paragraph": null,
+      "source": {
+        "file": "samples/complex/payment.cbl",
+        "paragraph": null,
+        "lines": null,
+        "module": null
+      }
+    },
+    {
+      "rule_id": "R015",
+      "type": "CONDITION-88",
+      "condition": "STATUS-INVALID-DATE = 13",
+      "actions": [],
+      "paragraph": null,
+      "source": {
+        "file": "samples/complex/payment.cbl",
+        "paragraph": null,
+        "lines": null,
+        "module": null
+      }
+    }
+  ]
+}

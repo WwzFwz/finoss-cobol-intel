@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "nodes": [
+    "ACCTVAL",
+    "BALCHK",
+    "CALCINT",
+    "DATEUTIL",
+    "LOGTRX",
+    "PAYMENT"
+  ],
+  "edges": [
+    {
+      "caller": "CALCINT",
+      "callee": "LOGTRX",
+      "call_type": "STATIC"
+    },
+    {
+      "caller": "PAYMENT",
+      "callee": "DATEUTIL",
+      "call_type": "STATIC"
+    },
+    {
+      "caller": "PAYMENT",
+      "callee": "BALCHK",
+      "call_type": "STATIC"
+    }
+  ],
+  "adjacency": {
+    "ACCTVAL": [],
+    "CALCINT": [
+      "LOGTRX"
+    ],
+    "PAYMENT": [
+      "BALCHK",
+      "DATEUTIL"
+    ]
+  },
+  "entry_points": [
+    "ACCTVAL",
+    "CALCINT",
+    "PAYMENT"
+  ],
+  "external_calls": [
+    "BALCHK",
+    "DATEUTIL",
+    "LOGTRX"
+  ]
+}

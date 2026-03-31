@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0",
+  "program_id": "FILEIO",
+  "file_path": "samples/complex/fileio.cbl",
+  "parser_name": "antlr4",
+  "data_items": [
+    {
+      "level": 1,
+      "name": "TXN-RECORD",
+      "pic": null,
+      "usage": null,
+      "value": null,
+      "redefines": null,
+      "occurs": null,
+      "is_condition": false,
+      "condition_values": [],
+      "children": [
+        {
+          "level": 5,
+          "name": "TXN-ID",
+          "pic": "9(6)",
+          "usage": null,
+          "value": null,
+          "redefines": null,
+          "occurs": null,
+          "is_condition": false,
+          "condition_values": [],
+          "children": [],
+          "source": null
+        },
+        {
+          "level": 5,
+          "name": "TXN-AMOUNT",
+          "pic": "9(5)V99",
+          "usage": null,
+          "value": null,
+          "redefines": null,
+          "occurs": null,
+          "is_condition": false,
+          "condition_values": [],
+          "children": [],
+          "source": null
+        }
+      ],
+      "source": null
+    },
+    {
+      "level": 1,
+      "name": "WS-TOTAL",
+      "pic": "9(7)V99",
+      "usage": null,
+      "value": "0",
+      "redefines": null,
+      "occurs": null,
+      "is_condition": false,
+      "condition_values": [],
+      "children": [],
+      "source": null
+    }
+  ],
+  "paragraphs": [
+    {
+      "name": "MAIN-PROGRAM",
+      "statements": [
+        {
+          "type": "DISPLAY",
+          "raw": "",
+          "target": null,
+          "condition": null,
+          "children": [],
+          "source": null
+        },
+        {
+          "type": "STOP-RUN",
+          "raw": "",
+          "target": null,
+          "condition": null,
+          "children": [],
+          "source": null
+        }
+      ],
+      "source": null
+    }
+  ],
+  "copybooks_used": []
+}
