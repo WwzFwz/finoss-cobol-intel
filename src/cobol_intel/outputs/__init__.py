@@ -14,6 +14,7 @@ from cobol_intel.outputs.writers import (
     render_rules_markdown,
     render_summary_markdown,
     write_json_artifact,
+    write_jsonl_artifact,
     write_text_artifact,
 )
 
@@ -22,5 +23,6 @@ __all__ = [
     "render_rules_markdown",
     "render_summary_markdown",
     "write_json_artifact",
+    "write_jsonl_artifact",
     "write_text_artifact",
 ]

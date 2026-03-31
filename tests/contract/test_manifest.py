@@ -41,7 +41,7 @@ def test_manifest_serializes_to_dict_with_required_fields():
     m = make_manifest()
     data = m.model_dump()
     required = {"schema_version", "tool_version", "run_id", "project_name", "status",
-                "started_at", "input_paths", "artifacts", "warnings", "errors"}
+                "started_at", "input_paths", "artifacts", "warnings", "errors", "governance"}
     assert required.issubset(data.keys())
 
 
@@ -50,3 +50,10 @@ def test_manifest_artifact_index_starts_empty():
     assert m.artifacts.ast == []
     assert m.artifacts.graphs == []
     assert m.artifacts.rules == []
+    assert m.artifacts.logs == []
+
+
+def test_manifest_governance_defaults_exist():
+    m = make_manifest()
+    assert m.governance.data_sensitivity.value == "low"
+    assert m.governance.token_usage.requests == 0

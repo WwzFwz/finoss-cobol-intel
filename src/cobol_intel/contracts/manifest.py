@@ -8,6 +8,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from cobol_intel.contracts.governance import GovernanceSummary
+
 
 SCHEMA_VERSION = "1.0"
 
@@ -32,6 +34,7 @@ class ArtifactIndex(BaseModel):
     graphs: list[str] = Field(default_factory=list)
     rules: list[str] = Field(default_factory=list)
     docs: list[str] = Field(default_factory=list)
+    logs: list[str] = Field(default_factory=list)
 
 
 class Manifest(BaseModel):
@@ -46,6 +49,7 @@ class Manifest(BaseModel):
     artifacts: ArtifactIndex = Field(default_factory=ArtifactIndex)
     warnings: list[str] = Field(default_factory=list)
     errors: list[RunError] = Field(default_factory=list)
+    governance: GovernanceSummary = Field(default_factory=GovernanceSummary)
 
     def is_success(self) -> bool:
         return self.status == RunStatus.COMPLETED

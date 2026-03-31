@@ -5,6 +5,8 @@ Produces ExplanationOutput with traceability back to source artifacts.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from cobol_intel.contracts.ast_output import ASTOutput
 from cobol_intel.contracts.explanation_output import (
     ExplanationMode,
@@ -31,6 +33,7 @@ def explain_program(
     call_graph: CallGraphOutput | None = None,
     mode: ExplanationMode = ExplanationMode.TECHNICAL,
     max_paragraph_explanations: int = _DEFAULT_MAX_PARAGRAPH_EXPLANATIONS,
+    prompt_transform: Callable[[str], str] | None = None,
 ) -> ExplanationOutput:
     """Generate a full program explanation using the LLM backend.
 
@@ -54,6 +57,8 @@ def explain_program(
         "3. A summary of the business rules\n\n"
         "Use the section headers: ## Program Summary, ## Data Structures, ## Business Rules"
     )
+    if prompt_transform:
+        summary_prompt = prompt_transform(summary_prompt)
     summary_response = backend.generate(summary_prompt, system=system_prompt)
     total_tokens = summary_response.total_tokens
 
@@ -80,6 +85,8 @@ def explain_program(
             "Be specific about conditions, data movements, and calls. "
             "Keep it concise (3-5 sentences)."
         )
+        if prompt_transform:
+            para_prompt = prompt_transform(para_prompt)
         para_response = backend.generate(para_prompt, system=system_prompt)
         total_tokens += para_response.total_tokens
 

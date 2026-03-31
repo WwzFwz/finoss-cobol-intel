@@ -10,6 +10,7 @@ from cobol_intel import __version__
 from cobol_intel.analysis.call_graph import build_call_graph
 from cobol_intel.analysis.rules_extractor import extract_rules
 from cobol_intel.contracts.ast_output import ASTOutput, DataItemOut, ParagraphOut, StatementOut
+from cobol_intel.contracts.governance import AuditEvent
 from cobol_intel.contracts.manifest import ArtifactIndex, Manifest, RunError, RunStatus
 from cobol_intel.contracts.rules_output import RulesOutput
 from cobol_intel.contracts.run_id import generate_run_id
@@ -23,6 +24,7 @@ from cobol_intel.outputs import (
 from cobol_intel.parsers.antlr_parser import ANTLR4Parser
 from cobol_intel.parsers.base import DataItemNode, ParagraphNode, ParseResult, StatementNode
 from cobol_intel.parsers.preprocessor import COBOLPreprocessor
+from cobol_intel.service.governance import default_actor, initialize_audit_log, append_audit_event
 
 COBOL_SUFFIXES = {".cbl", ".cob", ".cobol"}
 
@@ -60,6 +62,16 @@ def analyze_path(
         started_at=datetime.now(timezone.utc),
         input_paths=[str(input_path)],
         artifacts=ArtifactIndex(),
+    )
+    audit_log_path = initialize_audit_log(manifest, run_dir)
+    append_audit_event(
+        audit_log_path,
+        AuditEvent(
+            event_type="analysis.run.started",
+            run_id=run_id,
+            actor=default_actor(),
+            details={"input_paths": [str(input_path)]},
+        ),
     )
 
     parser = ANTLR4Parser()
@@ -130,6 +142,20 @@ def analyze_path(
     manifest.artifacts.docs.append(summary_rel.as_posix())
 
     write_json_artifact(run_dir / "manifest.json", manifest)
+    append_audit_event(
+        audit_log_path,
+        AuditEvent(
+            event_type="analysis.run.completed",
+            run_id=run_id,
+            actor=default_actor(),
+            status=manifest.status.value,
+            details={
+                "program_count": len(manifest.artifacts.ast),
+                "warning_count": len(manifest.warnings),
+                "error_count": len(manifest.errors),
+            },
+        ),
+    )
 
     return AnalysisRunResult(
         manifest=manifest,

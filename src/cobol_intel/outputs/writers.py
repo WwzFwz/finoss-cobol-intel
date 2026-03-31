@@ -27,6 +27,15 @@ def write_json_artifact(path: Path, artifact: BaseModel | dict[str, Any]) -> Pat
     return path
 
 
+def write_jsonl_artifact(path: Path, artifact: BaseModel | dict[str, Any]) -> Path:
+    """Append one JSON object per line to a JSONL artifact."""
+    ensure_directory(path.parent)
+    payload = artifact.model_dump(mode="json") if isinstance(artifact, BaseModel) else artifact
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(payload) + "\n")
+    return path
+
+
 def write_text_artifact(path: Path, content: str) -> Path:
     """Write plain-text artifact to disk."""
     ensure_directory(path.parent)
