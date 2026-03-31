@@ -48,6 +48,7 @@ class LarkCOBOLParser(COBOLParser):
 
         # Extract structured data from the parse tree
         program_id = self._extract_program_id(tree)
+        procedure_using = self._extract_procedure_using(tree)
         data_items = self._extract_data_items(tree)
         paragraphs = self._extract_paragraphs(tree)
         copybooks = self._extract_copybooks(tree)
@@ -56,6 +57,7 @@ class LarkCOBOLParser(COBOLParser):
             success=True,
             file_path=file_path,
             program_id=program_id,
+            procedure_using=procedure_using,
             tree=tree,
             data_items=data_items,
             paragraphs=paragraphs,
@@ -74,6 +76,17 @@ class LarkCOBOLParser(COBOLParser):
                     if hasattr(child, "type") and child.type == "NAME":
                         return str(child)
         return None
+
+    def _extract_procedure_using(self, tree: Tree) -> list[str]:
+        """Extract PROCEDURE DIVISION USING arguments."""
+        for node in tree.iter_subtrees():
+            if node.data == "procedure_using":
+                refs: list[str] = []
+                for child in node.children:
+                    if isinstance(child, Tree) and child.data == "simple_ref":
+                        refs.append(self._tree_to_text(child).strip())
+                return refs
+        return []
 
     def _extract_data_items(self, tree: Tree) -> list[DataItemNode]:
         """Extract data items as a flat list, then build hierarchy from level numbers."""
@@ -181,6 +194,8 @@ class LarkCOBOLParser(COBOLParser):
                 stmt_type = self._classify_statement(child.data)
                 if stmt_type:
                     stmt = StatementNode(type=stmt_type)
+                    if stmt_type == "EXEC-SQL":
+                        stmt.raw = self._tree_to_text(child)
                     stmt.target = self._extract_stmt_target(child, stmt_type)
                     stmt.condition = self._extract_stmt_condition(child, stmt_type)
                     # Recursively find nested statements
@@ -199,8 +214,14 @@ class LarkCOBOLParser(COBOLParser):
                     stmt = StatementNode(type=stmt_type)
                     stmt.children = self._find_nested_statements(child)
                     nested.append(stmt)
-                elif child.data in ("else_clause", "when_clause", "when_other",
-                                     "when_value", "then_block"):
+                elif child.data in (
+                    "else_clause",
+                    "when_clause",
+                    "when_other",
+                    "when_value",
+                    "then_block",
+                    "at_end_clause",
+                ):
                     # Recurse into blocks
                     nested.extend(self._find_nested_statements(child))
         return nested
@@ -217,9 +238,17 @@ class LarkCOBOLParser(COBOLParser):
             "perform_simple_stmt": "PERFORM",
             "perform_inline_stmt": "PERFORM-VARYING",
             "call_stmt": "CALL",
+            "open_stmt": "OPEN",
+            "close_stmt": "CLOSE",
+            "read_stmt": "READ",
+            "write_stmt": "WRITE",
+            "rewrite_stmt": "REWRITE",
+            "exec_sql_stmt": "EXEC-SQL",
             "if_stmt": "IF",
             "evaluate_stmt": "EVALUATE",
             "string_stmt": "STRING",
+            "unstring_stmt": "UNSTRING",
+            "inspect_stmt": "INSPECT",
             "stop_stmt": "STOP-RUN",
             "goback_stmt": "GOBACK",
         }
@@ -235,6 +264,10 @@ class LarkCOBOLParser(COBOLParser):
             for child in node.children:
                 if hasattr(child, "type") and child.type == "NAME":
                     return str(child)
+        elif stmt_type in {"READ", "WRITE", "REWRITE", "CLOSE", "INSPECT"}:
+            for child in node.children:
+                if isinstance(child, Tree) and child.data in ("simple_ref", "indexed_ref"):
+                    return self._tree_to_text(child).strip()
         return None
 
     def _extract_stmt_condition(self, node: Tree, stmt_type: str) -> str | None:

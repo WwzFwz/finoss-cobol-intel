@@ -69,6 +69,21 @@ class COBOLVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by COBOLParser#replacingClause.
+    def visitReplacingClause(self, ctx:COBOLParser.ReplacingClauseContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by COBOLParser#replacePair.
+    def visitReplacePair(self, ctx:COBOLParser.ReplacePairContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by COBOLParser#copyReplaceToken.
+    def visitCopyReplaceToken(self, ctx:COBOLParser.CopyReplaceTokenContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by COBOLParser#conditionEntry.
     def visitConditionEntry(self, ctx:COBOLParser.ConditionEntryContext):
         return self.visitChildren(ctx)
@@ -111,6 +126,11 @@ class COBOLVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by COBOLParser#procedureDivision.
     def visitProcedureDivision(self, ctx:COBOLParser.ProcedureDivisionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by COBOLParser#procedureUsing.
+    def visitProcedureUsing(self, ctx:COBOLParser.ProcedureUsingContext):
         return self.visitChildren(ctx)
 
 
@@ -174,6 +194,51 @@ class COBOLVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by COBOLParser#openStmt.
+    def visitOpenStmt(self, ctx:COBOLParser.OpenStmtContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by COBOLParser#openPhrase.
+    def visitOpenPhrase(self, ctx:COBOLParser.OpenPhraseContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by COBOLParser#openMode.
+    def visitOpenMode(self, ctx:COBOLParser.OpenModeContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by COBOLParser#closeStmt.
+    def visitCloseStmt(self, ctx:COBOLParser.CloseStmtContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by COBOLParser#readStmt.
+    def visitReadStmt(self, ctx:COBOLParser.ReadStmtContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by COBOLParser#atEndClause.
+    def visitAtEndClause(self, ctx:COBOLParser.AtEndClauseContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by COBOLParser#writeStmt.
+    def visitWriteStmt(self, ctx:COBOLParser.WriteStmtContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by COBOLParser#rewriteStmt.
+    def visitRewriteStmt(self, ctx:COBOLParser.RewriteStmtContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by COBOLParser#execSqlStmt.
+    def visitExecSqlStmt(self, ctx:COBOLParser.ExecSqlStmtContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by COBOLParser#ifStmt.
     def visitIfStmt(self, ctx:COBOLParser.IfStmtContext):
         return self.visitChildren(ctx)
@@ -206,6 +271,31 @@ class COBOLVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by COBOLParser#stringStmt.
     def visitStringStmt(self, ctx:COBOLParser.StringStmtContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by COBOLParser#unstringStmt.
+    def visitUnstringStmt(self, ctx:COBOLParser.UnstringStmtContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by COBOLParser#inspectStmt.
+    def visitInspectStmt(self, ctx:COBOLParser.InspectStmtContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by COBOLParser#inspectClause.
+    def visitInspectClause(self, ctx:COBOLParser.InspectClauseContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by COBOLParser#inspectTallyingClause.
+    def visitInspectTallyingClause(self, ctx:COBOLParser.InspectTallyingClauseContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by COBOLParser#inspectReplacingClause.
+    def visitInspectReplacingClause(self, ctx:COBOLParser.InspectReplacingClauseContext):
         return self.visitChildren(ctx)
 
 
@@ -271,6 +361,11 @@ class COBOLVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by COBOLParser#figConst.
     def visitFigConst(self, ctx:COBOLParser.FigConstContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by COBOLParser#sqlAtom.
+    def visitSqlAtom(self, ctx:COBOLParser.SqlAtomContext):
         return self.visitChildren(ctx)
 
 

@@ -116,6 +116,33 @@ class COBOLListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by COBOLParser#replacingClause.
+    def enterReplacingClause(self, ctx:COBOLParser.ReplacingClauseContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#replacingClause.
+    def exitReplacingClause(self, ctx:COBOLParser.ReplacingClauseContext):
+        pass
+
+
+    # Enter a parse tree produced by COBOLParser#replacePair.
+    def enterReplacePair(self, ctx:COBOLParser.ReplacePairContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#replacePair.
+    def exitReplacePair(self, ctx:COBOLParser.ReplacePairContext):
+        pass
+
+
+    # Enter a parse tree produced by COBOLParser#copyReplaceToken.
+    def enterCopyReplaceToken(self, ctx:COBOLParser.CopyReplaceTokenContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#copyReplaceToken.
+    def exitCopyReplaceToken(self, ctx:COBOLParser.CopyReplaceTokenContext):
+        pass
+
+
     # Enter a parse tree produced by COBOLParser#conditionEntry.
     def enterConditionEntry(self, ctx:COBOLParser.ConditionEntryContext):
         pass
@@ -194,6 +221,15 @@ class COBOLListener(ParseTreeListener):
 
     # Exit a parse tree produced by COBOLParser#procedureDivision.
     def exitProcedureDivision(self, ctx:COBOLParser.ProcedureDivisionContext):
+        pass
+
+
+    # Enter a parse tree produced by COBOLParser#procedureUsing.
+    def enterProcedureUsing(self, ctx:COBOLParser.ProcedureUsingContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#procedureUsing.
+    def exitProcedureUsing(self, ctx:COBOLParser.ProcedureUsingContext):
         pass
 
 
@@ -305,6 +341,87 @@ class COBOLListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by COBOLParser#openStmt.
+    def enterOpenStmt(self, ctx:COBOLParser.OpenStmtContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#openStmt.
+    def exitOpenStmt(self, ctx:COBOLParser.OpenStmtContext):
+        pass
+
+
+    # Enter a parse tree produced by COBOLParser#openPhrase.
+    def enterOpenPhrase(self, ctx:COBOLParser.OpenPhraseContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#openPhrase.
+    def exitOpenPhrase(self, ctx:COBOLParser.OpenPhraseContext):
+        pass
+
+
+    # Enter a parse tree produced by COBOLParser#openMode.
+    def enterOpenMode(self, ctx:COBOLParser.OpenModeContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#openMode.
+    def exitOpenMode(self, ctx:COBOLParser.OpenModeContext):
+        pass
+
+
+    # Enter a parse tree produced by COBOLParser#closeStmt.
+    def enterCloseStmt(self, ctx:COBOLParser.CloseStmtContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#closeStmt.
+    def exitCloseStmt(self, ctx:COBOLParser.CloseStmtContext):
+        pass
+
+
+    # Enter a parse tree produced by COBOLParser#readStmt.
+    def enterReadStmt(self, ctx:COBOLParser.ReadStmtContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#readStmt.
+    def exitReadStmt(self, ctx:COBOLParser.ReadStmtContext):
+        pass
+
+
+    # Enter a parse tree produced by COBOLParser#atEndClause.
+    def enterAtEndClause(self, ctx:COBOLParser.AtEndClauseContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#atEndClause.
+    def exitAtEndClause(self, ctx:COBOLParser.AtEndClauseContext):
+        pass
+
+
+    # Enter a parse tree produced by COBOLParser#writeStmt.
+    def enterWriteStmt(self, ctx:COBOLParser.WriteStmtContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#writeStmt.
+    def exitWriteStmt(self, ctx:COBOLParser.WriteStmtContext):
+        pass
+
+
+    # Enter a parse tree produced by COBOLParser#rewriteStmt.
+    def enterRewriteStmt(self, ctx:COBOLParser.RewriteStmtContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#rewriteStmt.
+    def exitRewriteStmt(self, ctx:COBOLParser.RewriteStmtContext):
+        pass
+
+
+    # Enter a parse tree produced by COBOLParser#execSqlStmt.
+    def enterExecSqlStmt(self, ctx:COBOLParser.ExecSqlStmtContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#execSqlStmt.
+    def exitExecSqlStmt(self, ctx:COBOLParser.ExecSqlStmtContext):
+        pass
+
+
     # Enter a parse tree produced by COBOLParser#ifStmt.
     def enterIfStmt(self, ctx:COBOLParser.IfStmtContext):
         pass
@@ -365,6 +482,51 @@ class COBOLListener(ParseTreeListener):
 
     # Exit a parse tree produced by COBOLParser#stringStmt.
     def exitStringStmt(self, ctx:COBOLParser.StringStmtContext):
+        pass
+
+
+    # Enter a parse tree produced by COBOLParser#unstringStmt.
+    def enterUnstringStmt(self, ctx:COBOLParser.UnstringStmtContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#unstringStmt.
+    def exitUnstringStmt(self, ctx:COBOLParser.UnstringStmtContext):
+        pass
+
+
+    # Enter a parse tree produced by COBOLParser#inspectStmt.
+    def enterInspectStmt(self, ctx:COBOLParser.InspectStmtContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#inspectStmt.
+    def exitInspectStmt(self, ctx:COBOLParser.InspectStmtContext):
+        pass
+
+
+    # Enter a parse tree produced by COBOLParser#inspectClause.
+    def enterInspectClause(self, ctx:COBOLParser.InspectClauseContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#inspectClause.
+    def exitInspectClause(self, ctx:COBOLParser.InspectClauseContext):
+        pass
+
+
+    # Enter a parse tree produced by COBOLParser#inspectTallyingClause.
+    def enterInspectTallyingClause(self, ctx:COBOLParser.InspectTallyingClauseContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#inspectTallyingClause.
+    def exitInspectTallyingClause(self, ctx:COBOLParser.InspectTallyingClauseContext):
+        pass
+
+
+    # Enter a parse tree produced by COBOLParser#inspectReplacingClause.
+    def enterInspectReplacingClause(self, ctx:COBOLParser.InspectReplacingClauseContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#inspectReplacingClause.
+    def exitInspectReplacingClause(self, ctx:COBOLParser.InspectReplacingClauseContext):
         pass
 
 
@@ -482,6 +644,15 @@ class COBOLListener(ParseTreeListener):
 
     # Exit a parse tree produced by COBOLParser#figConst.
     def exitFigConst(self, ctx:COBOLParser.FigConstContext):
+        pass
+
+
+    # Enter a parse tree produced by COBOLParser#sqlAtom.
+    def enterSqlAtom(self, ctx:COBOLParser.SqlAtomContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#sqlAtom.
+    def exitSqlAtom(self, ctx:COBOLParser.SqlAtomContext):
         pass
 
 

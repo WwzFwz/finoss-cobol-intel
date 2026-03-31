@@ -46,7 +46,16 @@ data_entry: copy_entry
           | condition_entry
           | data_item
 
-copy_entry: "COPY" NAME DOT
+copy_entry: "COPY" NAME replacing_clause? DOT
+
+replacing_clause: "REPLACING" replace_pair+
+
+replace_pair: copy_replace_token "BY" copy_replace_token
+
+copy_replace_token: PSEUDO_TEXT
+                  | STRING_LIT
+                  | NAME
+                  | NUMBER
 
 condition_entry: "88" NAME "VALUE" literal DOT
 
@@ -74,7 +83,9 @@ redefines_clause: "REDEFINES" NAME
 // ============================================================
 // PROCEDURE DIVISION
 // ============================================================
-procedure_division: "PROCEDURE" "DIVISION" DOT paragraph*
+procedure_division: "PROCEDURE" "DIVISION" procedure_using? DOT paragraph*
+
+procedure_using: "USING" name_ref+
 
 paragraph: NAME DOT sentence*
 
@@ -89,9 +100,17 @@ sentence: statement+ DOT
           | perform_inline_stmt
           | perform_simple_stmt
           | call_stmt
+          | open_stmt
+          | close_stmt
+          | read_stmt
+          | write_stmt
+          | rewrite_stmt
+          | exec_sql_stmt
           | if_stmt
           | evaluate_stmt
           | string_stmt
+          | unstring_stmt
+          | inspect_stmt
           | stop_stmt
           | goback_stmt
 
@@ -113,6 +132,27 @@ perform_simple_stmt: "PERFORM" NAME
 
 call_stmt: "CALL" STRING_LIT "USING" name_ref+
 
+open_stmt: "OPEN" open_phrase+
+
+open_phrase: open_mode name_ref+
+
+open_mode: "INPUT" -> open_input
+         | "OUTPUT" -> open_output
+         | "I-O" -> open_io
+         | "EXTEND" -> open_extend
+
+close_stmt: "CLOSE" name_ref+
+
+read_stmt: "READ" name_ref ("INTO" name_ref)? at_end_clause?
+
+at_end_clause: "AT" "END" statement*
+
+write_stmt: "WRITE" name_ref ("FROM" operand)?
+
+rewrite_stmt: "REWRITE" name_ref ("FROM" operand)?
+
+exec_sql_stmt: "EXEC" "SQL" sql_atom+ "END-EXEC"
+
 if_stmt: "IF" condition statement* else_clause? "END-IF"
 
 else_clause: "ELSE" statement*
@@ -131,6 +171,17 @@ when_match: condition_name
 condition_name: NAME
 
 string_stmt: "STRING" operand+ "DELIMITED" "BY" delim_target "INTO" name_ref
+
+unstring_stmt: "UNSTRING" operand "DELIMITED" "BY" delim_target "INTO" name_ref+
+
+inspect_stmt: "INSPECT" name_ref inspect_clause
+
+inspect_clause: inspect_tallying_clause
+              | inspect_replacing_clause
+
+inspect_tallying_clause: "TALLYING" name_ref "FOR" "ALL" literal
+
+inspect_replacing_clause: "REPLACING" "ALL" literal "BY" literal
 
 delim_target: "SIZE" -> delim_size
             | operand -> delim_value
@@ -196,13 +247,41 @@ fig_const: "SPACE"  | "SPACES"
          | "HIGH-VALUE"  | "HIGH-VALUES"
          | "LOW-VALUE"   | "LOW-VALUES"
 
+sql_atom: NAME
+        | SQL_IDENT
+        | NUMBER
+        | DECIMAL
+        | STRING_LIT
+        | STAR
+        | EQ
+        | GT
+        | LT
+        | GTE
+        | LTE
+        | LPAREN
+        | RPAREN
+        | COMMA
+        | COLON
+
 // ============================================================
 // TERMINALS
 // ============================================================
 DECIMAL.2: /[0-9]+\.[0-9]+/
 NUMBER: /[0-9]+/
+PSEUDO_TEXT: /==[^=].*?==/
 NAME.-1: /[A-Z][A-Z0-9]([A-Z0-9-]*[A-Z0-9])?/ | /[A-Z]/
+SQL_IDENT.-1: /[A-Z][A-Z0-9_]*/
 STRING_LIT: /"[^"]*"/ | /'[^']*'/
+GTE: ">="
+LTE: "<="
+GT: ">"
+LT: "<"
+EQ: "="
+STAR: "*"
+LPAREN: "("
+RPAREN: ")"
+COMMA: ","
+COLON: ":"
 DOT: "."
 
 %import common.WS

@@ -184,9 +184,17 @@ class COBOLPreprocessor:
         result: list[str] = []
 
         for line in lines:
-            match = re.match(r"\s*COPY\s+(\S+)\s*\.", line, re.IGNORECASE)
+            match = re.match(
+                r"\s*COPY\s+(\S+?)(?:\s+REPLACING\s+(.+?))?\s*\.\s*$",
+                line,
+                re.IGNORECASE,
+            )
             if match:
                 copybook_name = match.group(1).upper()
+                replacements = self._parse_copy_replacements(
+                    match.group(2) or "",
+                    warnings,
+                )
                 if copybook_name in copy_stack:
                     chain = " -> ".join([*copy_stack, copybook_name])
                     warnings.append(
@@ -210,7 +218,11 @@ class COBOLPreprocessor:
                     )
                     warnings.extend(sub_result.warnings)
                     resolved.extend(sub_result.copybooks_resolved)
-                    result.extend(sub_result.text.splitlines())
+                    replaced_text = self._apply_copy_replacements(
+                        sub_result.text,
+                        replacements,
+                    )
+                    result.extend(replaced_text.splitlines())
                 else:
                     warnings.append(
                         f"COPYBOOK '{copybook_name}' not found in {self.copybook_dirs}"
@@ -239,3 +251,56 @@ class COBOLPreprocessor:
         """
         pattern = r"\b(PIC(?:TURE)?)\s+(?:IS\s+)?([A-Z0-9()VSX]+)"
         return re.sub(pattern, r'\1 "\2"', text)
+
+    def _parse_copy_replacements(
+        self,
+        clause: str,
+        warnings: list[str],
+    ) -> list[tuple[str, str]]:
+        """Parse COPY ... REPLACING pairs from a single-line clause."""
+        if not clause.strip():
+            return []
+
+        token_pattern = r'==.*?==|"[^"]*"|\'[^\']*\'|[A-Z0-9:-]+'
+        tokens = re.findall(token_pattern, clause)
+        replacements: list[tuple[str, str]] = []
+        idx = 0
+
+        while idx + 2 < len(tokens):
+            source = tokens[idx]
+            by_token = tokens[idx + 1]
+            target = tokens[idx + 2]
+            if by_token != "BY":
+                warnings.append(f"Unsupported COPY REPLACING clause fragment: {clause}")
+                break
+            replacements.append(
+                (source, self._strip_pseudo_text(target))
+            )
+            idx += 3
+
+        if idx != len(tokens):
+            warnings.append(f"Unparsed COPY REPLACING tokens in clause: {clause}")
+
+        return replacements
+
+    def _apply_copy_replacements(
+        self,
+        text: str,
+        replacements: list[tuple[str, str]],
+    ) -> str:
+        """Apply COPY REPLACING substitutions to resolved copybook text."""
+        result = text
+        for source, target in replacements:
+            if source.startswith("==") or source.startswith('"') or source.startswith("'"):
+                result = result.replace(source, target)
+                continue
+
+            pattern = rf"(?<![A-Z0-9-]){re.escape(source)}(?![A-Z0-9-])"
+            result = re.sub(pattern, target, result)
+        return result
+
+    def _strip_pseudo_text(self, token: str) -> str:
+        """Remove pseudo-text delimiters used by COPY REPLACING."""
+        if token.startswith("==") and token.endswith("=="):
+            return token[2:-2]
+        return token

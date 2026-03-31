@@ -19,6 +19,7 @@ class ParseResult:
     success: bool
     file_path: str = ""
     program_id: str | None = None
+    procedure_using: list[str] = field(default_factory=list)
     tree: Any = None  # Parser-specific tree (lark Tree, ANTLR4 tree, etc.)
     data_items: list[DataItemNode] = field(default_factory=list)
     paragraphs: list[ParagraphNode] = field(default_factory=list)

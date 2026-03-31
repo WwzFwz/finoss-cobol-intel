@@ -158,6 +158,7 @@ def to_ast_output(result: ParseResult, file_path: str = "") -> ASTOutput:
         program_id=result.program_id,
         file_path=file_path,
         parser_name=result.parser_name,
+        procedure_using=result.procedure_using,
         data_items=[_to_data_item(item) for item in result.data_items],
         paragraphs=[_to_paragraph(paragraph) for paragraph in result.paragraphs],
         copybooks_used=result.copybooks_used,

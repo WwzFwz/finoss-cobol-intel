@@ -60,7 +60,22 @@ dataEntry
     ;
 
 copyEntry
-    : COPY NAME DOT
+    : COPY NAME replacingClause? DOT
+    ;
+
+replacingClause
+    : REPLACING replacePair+
+    ;
+
+replacePair
+    : copyReplaceToken BY copyReplaceToken
+    ;
+
+copyReplaceToken
+    : PSEUDO_TEXT
+    | STRING_LIT
+    | NAME
+    | NUMBER
     ;
 
 conditionEntry
@@ -88,7 +103,11 @@ redefinesClause : REDEFINES NAME ;
 // --- PROCEDURE DIVISION ---
 
 procedureDivision
-    : PROCEDURE DIVISION DOT paragraph*
+    : PROCEDURE DIVISION procedureUsing? DOT paragraph*
+    ;
+
+procedureUsing
+    : USING nameRef+
     ;
 
 paragraph
@@ -109,9 +128,17 @@ statement
     | performInlineStmt
     | performSimpleStmt
     | callStmt
+    | openStmt
+    | closeStmt
+    | readStmt
+    | writeStmt
+    | rewriteStmt
+    | execSqlStmt
     | ifStmt
     | evaluateStmt
     | stringStmt
+    | unstringStmt
+    | inspectStmt
     | stopStmt
     | gobackStmt
     ;
@@ -125,6 +152,15 @@ multiplyStmt        : MULTIPLY operand BY operand (GIVING nameRef)? ;
 performInlineStmt   : PERFORM VARYING NAME FROM operand BY operand UNTIL condition statement* END_PERFORM ;
 performSimpleStmt   : PERFORM NAME ;
 callStmt            : CALL STRING_LIT USING nameRef+ ;
+openStmt            : OPEN openPhrase+ ;
+openPhrase          : openMode nameRef+ ;
+openMode            : INPUT | OUTPUT | I_O | EXTEND ;
+closeStmt           : CLOSE nameRef+ ;
+readStmt            : READ nameRef (INTO nameRef)? atEndClause? ;
+atEndClause         : AT END statement* ;
+writeStmt           : WRITE nameRef (FROM operand)? ;
+rewriteStmt         : REWRITE nameRef (FROM operand)? ;
+execSqlStmt         : EXEC SQL sqlAtom+ END_EXEC ;
 ifStmt              : IF condition statement* elseClause? END_IF ;
 elseClause          : ELSE statement* ;
 evaluateStmt        : EVALUATE evalSubject whenClause+ END_EVALUATE ;
@@ -134,6 +170,13 @@ whenClause          : WHEN OTHER statement*
                     ;
 whenMatch           : NAME | literal ;
 stringStmt          : STRING_KW operand+ DELIMITED BY delimTarget INTO nameRef ;
+unstringStmt        : UNSTRING operand DELIMITED BY delimTarget INTO nameRef+ ;
+inspectStmt         : INSPECT nameRef inspectClause ;
+inspectClause       : inspectTallyingClause
+                    | inspectReplacingClause
+                    ;
+inspectTallyingClause : TALLYING nameRef FOR ALL literal ;
+inspectReplacingClause: REPLACING ALL literal BY literal ;
 delimTarget         : SIZE | operand ;
 stopStmt            : STOP RUN ;
 gobackStmt          : GOBACK ;
@@ -179,6 +222,27 @@ figConst
     | HIGH_VALUE | HIGH_VALUES | LOW_VALUE | LOW_VALUES
     ;
 
+sqlAtom
+    : NAME
+    | SQL_IDENT
+    | SELECT
+    | INTO
+    | FROM
+    | NUMBER
+    | DECIMAL
+    | STRING_LIT
+    | STAR
+    | EQ
+    | GT
+    | LT
+    | GTE
+    | LTE
+    | LPAREN
+    | RPAREN
+    | COMMA
+    | COLON
+    ;
+
 // =================== Lexer Rules ===================
 // Order matters: keywords MUST come before NAME.
 
@@ -200,6 +264,7 @@ PROCEDURE       : 'PROCEDURE' ;
 COPY            : 'COPY' ;
 SELECT          : 'SELECT' ;
 ASSIGN          : 'ASSIGN' ;
+REPLACING       : 'REPLACING' ;
 PIC             : 'PIC' ;
 PICTURE         : 'PICTURE' ;
 VALUE           : 'VALUE' ;
@@ -231,6 +296,20 @@ UNTIL           : 'UNTIL' ;
 END_PERFORM     : 'END-PERFORM' ;
 CALL            : 'CALL' ;
 USING           : 'USING' ;
+OPEN            : 'OPEN' ;
+INPUT           : 'INPUT' ;
+OUTPUT          : 'OUTPUT' ;
+I_O             : 'I-O' ;
+EXTEND          : 'EXTEND' ;
+CLOSE           : 'CLOSE' ;
+READ            : 'READ' ;
+WRITE           : 'WRITE' ;
+REWRITE         : 'REWRITE' ;
+AT              : 'AT' ;
+END             : 'END' ;
+EXEC            : 'EXEC' ;
+SQL             : 'SQL' ;
+END_EXEC        : 'END-EXEC' ;
 IF              : 'IF' ;
 ELSE            : 'ELSE' ;
 END_IF          : 'END-IF' ;
@@ -240,6 +319,11 @@ OTHER           : 'OTHER' ;
 END_EVALUATE    : 'END-EVALUATE' ;
 TRUE_KW         : 'TRUE' ;
 STRING_KW       : 'STRING' ;
+UNSTRING        : 'UNSTRING' ;
+INSPECT         : 'INSPECT' ;
+TALLYING        : 'TALLYING' ;
+FOR             : 'FOR' ;
+ALL             : 'ALL' ;
 DELIMITED       : 'DELIMITED' ;
 SIZE            : 'SIZE' ;
 INTO            : 'INTO' ;
@@ -278,11 +362,15 @@ STAR            : '*' ;
 SLASH           : '/' ;
 LPAREN          : '(' ;
 RPAREN          : ')' ;
+COMMA           : ',' ;
+COLON           : ':' ;
 
 // Value terminals — DECIMAL must come before NUMBER and DOT
 DECIMAL         : [0-9]+ '.' [0-9]+ ;
 NUMBER          : [0-9]+ ;
+PSEUDO_TEXT     : '==' .*? '==' ;
 NAME            : [A-Z] ([A-Z0-9] ([A-Z0-9\-]* [A-Z0-9])?)? ;
+SQL_IDENT       : [A-Z] [A-Z0-9_]* ;
 STRING_LIT      : '"' ~["]* '"' | '\'' ~[']* '\'' ;
 DOT             : '.' ;
 

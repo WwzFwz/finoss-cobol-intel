@@ -58,6 +58,7 @@ class ASTOutput(BaseModel):
     program_id: str | None = None
     file_path: str = ""
     parser_name: str = ""
+    procedure_using: list[str] = Field(default_factory=list)
     data_items: list[DataItemOut] = Field(default_factory=list)
     paragraphs: list[ParagraphOut] = Field(default_factory=list)
     copybooks_used: list[str] = Field(default_factory=list)

@@ -33,6 +33,7 @@ class _ASTExtractor(COBOLVisitor):
 
     def __init__(self) -> None:
         self.program_id: str | None = None
+        self.procedure_using: list[str] = []
         self.data_items: list[DataItemNode] = []
         self.paragraphs: list[ParagraphNode] = []
         self.copybooks: list[str] = []
@@ -60,6 +61,12 @@ class _ASTExtractor(COBOLVisitor):
                 is_condition=True,
                 condition_values=[value] if value else [],
             ))
+        return self.visitChildren(ctx)
+
+    def visitProcedureUsing(self, ctx):
+        self.procedure_using = [
+            name_ref.getText() for name_ref in self._ctx_list(ctx.nameRef())
+        ]
         return self.visitChildren(ctx)
 
     def visitDataItem(self, ctx):
@@ -124,9 +131,17 @@ class _ASTExtractor(COBOLVisitor):
             ("performSimpleStmt", "PERFORM"),
             ("performInlineStmt", "PERFORM-VARYING"),
             ("callStmt", "CALL"),
+            ("openStmt", "OPEN"),
+            ("closeStmt", "CLOSE"),
+            ("readStmt", "READ"),
+            ("writeStmt", "WRITE"),
+            ("rewriteStmt", "REWRITE"),
+            ("execSqlStmt", "EXEC-SQL"),
             ("ifStmt", "IF"),
             ("evaluateStmt", "EVALUATE"),
             ("stringStmt", "STRING"),
+            ("unstringStmt", "UNSTRING"),
+            ("inspectStmt", "INSPECT"),
             ("stopStmt", "STOP-RUN"),
             ("gobackStmt", "GOBACK"),
         ]
@@ -135,6 +150,8 @@ class _ASTExtractor(COBOLVisitor):
             child = getattr(ctx, attr, lambda: None)()
             if child is not None:
                 stmt = StatementNode(type=stmt_type)
+                if stmt_type == "EXEC-SQL":
+                    stmt.raw = child.getText()
                 stmt.target = self._extract_target(child, stmt_type)
                 stmt.condition = self._extract_condition(child, stmt_type)
                 stmt.children = self._find_nested_statements(child)
@@ -151,6 +168,14 @@ class _ASTExtractor(COBOLVisitor):
             name = ctx.NAME()
             if name:
                 return name.getText()
+        elif stmt_type in {"READ", "WRITE", "REWRITE", "CLOSE", "INSPECT"}:
+            names = self._ctx_list(ctx.nameRef())
+            if names:
+                return names[0].getText()
+        elif stmt_type == "UNSTRING":
+            names = self._ctx_list(ctx.nameRef())
+            if names:
+                return names[0].getText()
         return None
 
     def _extract_condition(self, ctx, stmt_type: str) -> str | None:
@@ -192,6 +217,14 @@ class _ASTExtractor(COBOLVisitor):
                     if stmt:
                         nested.append(stmt)
 
+        if hasattr(ctx, "atEndClause"):
+            at_end_ctx = ctx.atEndClause()
+            if at_end_ctx:
+                for stmt_ctx in at_end_ctx.statement():
+                    stmt = self._extract_statement(stmt_ctx)
+                    if stmt:
+                        nested.append(stmt)
+
         return nested
 
     def _extract_literal(self, ctx) -> str | None:
@@ -206,6 +239,14 @@ class _ASTExtractor(COBOLVisitor):
         if ctx.figConst():
             return ctx.figConst().getText()
         return None
+
+    def _ctx_list(self, value):
+        """Normalize ANTLR context accessors that may return one item or a list."""
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return value
+        return [value]
 
 
 class ANTLR4Parser(COBOLParser):
@@ -248,6 +289,7 @@ class ANTLR4Parser(COBOLParser):
             success=True,
             file_path=file_path,
             program_id=extractor.program_id,
+            procedure_using=extractor.procedure_using,
             tree=tree,
             data_items=data_items,
             paragraphs=extractor.paragraphs,
