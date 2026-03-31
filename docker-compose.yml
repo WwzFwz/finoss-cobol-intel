@@ -1,0 +1,19 @@
+services:
+  cobol-intel:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./samples:/app/samples:ro
+      - ./copybooks:/app/copybooks:ro
+      - ./artifacts:/app/artifacts
+    environment:
+      - COBOL_INTEL_POLICY_PATH=/app/config/llm_policy.json
+
+  # Optional: local LLM backend for fully on-premise deployment
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    profiles:
+      - local-llm

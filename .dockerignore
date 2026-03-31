@@ -1,0 +1,13 @@
+.venv
+.git
+__pycache__
+*.pyc
+artifacts/
+tests/
+docs/
+.github/
+.mypy_cache/
+.ruff_cache/
+benchmark_*.json
+benchmark_*.md
+tests_runtime_*
