@@ -33,6 +33,7 @@ raw COBOL.
 - Phase 0 complete: parser evaluation, contracts, and project foundations
 - Phase 1 complete: static analysis core, artifact writing, corpus coverage, and regression baselines
 - Phase 2 complete: LLM backend abstraction, explain workflows, and multi-backend support are available
+- Phase 3 foundations in progress: governance, policy enforcement, and safer enterprise integration are landing
 
 See [docs/PROGRESS.md](docs/PROGRESS.md) for the implementation timeline.
 
@@ -126,6 +127,12 @@ Supported explanation backends:
 The `explain` command runs the static-analysis pipeline first, then generates
 traceable summaries and paragraph explanations from the selected backend.
 
+Additional safety controls:
+
+- `--strict-policy` to hard block regulated-policy violations
+- `--max-tokens-per-run` to cap LLM spend per explain run
+- `--policy-config` to load deployment-specific model policy from JSON
+
 ## Enterprise Readiness Foundations
 
 The repo now includes the first governance building blocks needed for regulated
@@ -133,8 +140,9 @@ environments:
 
 - `logs/audit_events.jsonl` for analysis and explain runs
 - manifest-level `governance` summary with sensitivity and token usage
-- approved model registry and preset helpers for `claude`, `openai`, and `ollama`
-- sensitivity scoring and cloud redaction helpers for safer LLM integration
+- configurable approved model registry and preset helpers for `claude`, `openai`, and `ollama`
+- strict policy enforcement and token-budget controls at explain time
+- backend retry/timeout support plus cloud redaction helpers for safer LLM integration
 
 See [docs/FINTECH_READINESS.md](docs/FINTECH_READINESS.md) for the current
 readiness checklist and remaining gaps.

@@ -9,7 +9,7 @@ Log pengerjaan project. Update setiap sesi kerja.
 **Fase**: 3 - Output And Governance Foundations (in progress)
 **Mulai**: 2026-03-31
 **Target MVP**: -
-**Test Status**: 186/186 pass
+**Test Status**: 190/190 pass
 
 Catatan:
 
@@ -21,6 +21,8 @@ Catatan:
   dan jumlah paragraph explanation dibatasi agar cost/latency tetap terkendali.
 - Fondasi governance Phase 3 sudah mulai masuk: audit/event log, manifest governance,
   sensitivity scoring, approved model registry, dan redaction helper.
+- Hardening berikutnya sudah masuk: strict policy enforcement, token budget cap,
+  configurable JSON policy config, dan retry/timeout dasar untuk semua backend.
 
 ---
 
@@ -124,6 +126,10 @@ Catatan:
 - [x] Approved model registry + preset helper
 - [x] Sensitivity classification helper
 - [x] Redaction helper untuk prompt cloud yang sensitif
+- [x] Strict policy enforcement untuk workload sensitif pada backend cloud
+- [x] Token budget per explain run
+- [x] Retry / timeout dasar untuk backend OpenAI, Claude, dan Ollama
+- [x] Configurable policy registry via JSON config
 - [ ] Documentation generator output Markdown per program
 - [ ] HTML report generator
 - [ ] Change impact analyzer
@@ -221,6 +227,16 @@ Catatan:
 - Tambah sensitivity classifier dan redaction helper untuk cloud prompts
 - Tambah unit/contract tests untuk governance, policy, dan audit logging
 - Rerun suite: **186/186 pass**
+
+### 2026-04-01 - Policy Enforcement And Backend Resilience
+
+- Tambah `config/llm_policy.json` sebagai policy registry default yang bisa dioverride
+- Tambah strict policy enforcement untuk block cloud explain pada artifact sensitif
+- Tambah token budget enforcement di `service/explain.py`
+- Tambah retry + timeout dasar di backend Claude, OpenAI, dan Ollama
+- Tambah redaction pattern yang lebih luas untuk field PII umum
+- Tambah test untuk policy config, strict block, token budget, dan retry behavior
+- Rerun suite: **190/190 pass**
 
 ---
 

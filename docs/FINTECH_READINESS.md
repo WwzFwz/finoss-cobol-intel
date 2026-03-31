@@ -33,6 +33,7 @@ integration, apa yang masih berupa fondasi, dan apa yang masih gap.
 ### Model Governance
 
 - approved model registry tersedia untuk `claude`, `openai`, dan `ollama`
+- registry dan preset bisa di-load dari `config/llm_policy.json` atau path JSON kustom
 - preset dasar tersedia:
   - `fast`
   - `balanced`
@@ -40,6 +41,13 @@ integration, apa yang masih berupa fondasi, dan apa yang masih gap.
   - `local-only`
 - policy helper memberi warning jika model tidak approved atau cloud backend
   dipakai untuk workload sensitif
+- strict policy mode bisa hard block request yang melanggar aturan deployment
+
+### Cost And Reliability Guard
+
+- token budget per explain run sekarang bisa dibatasi
+- backend OpenAI, Claude, dan Ollama punya retry + timeout dasar
+- explain pipeline bisa berhenti lebih awal saat budget habis
 
 ### Sensitivity Guard
 
@@ -75,15 +83,14 @@ integration, apa yang masih berupa fondasi, dan apa yang masih gap.
 
 ### Operational Controls
 
-- backend timeout / retry / circuit breaker policy
-- quota / budget enforcement
+- circuit breaker policy
 - observability dashboard untuk latency, failure rate, dan token usage
 
 ### Data Protection
 
 - field-level classifier yang lebih akurat
-- configurable redaction policy per tenant / per project
-- policy routing yang enforce local-only, bukan sekadar warning
+- configurable redaction policy per tenant / per project yang lebih kaya
+- policy routing yang lebih granular dari sekadar cloud vs local
 
 ### Model Lifecycle
 
@@ -96,8 +103,7 @@ integration, apa yang masih berupa fondasi, dan apa yang masih gap.
 ## Prioritas Implementasi Yang Disarankan
 
 1. Read-only API untuk consume artifacts dan audit logs
-2. Retry/timeout/fallback policy per backend
-3. Token budget + quota policy
-4. Sensitivity policy yang bisa enforce local-only
+2. Circuit breaker + richer fallback policy per backend
+3. Observability dashboard untuk token, latency, dan failure rate
+4. Sensitivity policy yang lebih granular per tenant / per project
 5. Auth/RBAC jika sudah masuk multi-user deployment
-

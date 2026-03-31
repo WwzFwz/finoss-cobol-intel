@@ -407,6 +407,22 @@ Preset ini adalah fondasi untuk policy routing di fase berikutnya. Tujuannya:
 - local/on-prem untuk workload sensitif
 - approval model lebih mudah diaudit
 
+Registry ini sekarang bisa dibaca dari `config/llm_policy.json` atau path JSON
+lain yang diberikan saat runtime, supaya tiap deployment punya approval policy
+sendiri tanpa mengubah source code.
+
+### Strict Policy And Token Budget
+
+Warning saja tidak cukup untuk lingkungan regulated. Karena itu explain pipeline
+sekarang bisa dijalankan dalam strict mode:
+
+- jika artifact sensitif diarahkan ke backend cloud, request bisa diblok
+- jika model tidak termasuk approved registry deployment, request bisa diblok
+- token usage per explain run bisa dibatasi agar cost tidak lepas kontrol
+
+Tujuan fitur ini bukan menggantikan platform governance penuh, tetapi memberi
+pagar yang nyata saat tool dipakai di pilot enterprise atau technical review.
+
 ---
 
 ## On-Premise Deployment

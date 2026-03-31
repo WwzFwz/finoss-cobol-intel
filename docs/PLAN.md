@@ -386,8 +386,10 @@ GUI boleh dibuat nanti, tetapi:
 - [x] Approved model registry + preset helpers untuk backend LLM
 - [x] Sensitivity classification helper untuk artifact COBOL
 - [x] Redaction helper untuk prompt cloud pada workload sensitif
-- [ ] Retry / timeout / fallback policy per backend
-- [ ] Token budget / quota policy
+- [x] Retry / timeout policy dasar per backend
+- [x] Token budget per explain run
+- [x] Strict policy enforcement untuk workload sensitif pada backend cloud
+- [x] Configurable policy registry via JSON config
 - [ ] Documentation generator untuk Markdown
 - [ ] Change impact analyzer
 - [ ] HTML report generator

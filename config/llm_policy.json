@@ -1,0 +1,35 @@
+{
+  "strict_mode": false,
+  "max_tokens_per_run": null,
+  "approved_models": {
+    "claude": ["claude-sonnet-4-20250514"],
+    "openai": ["gpt-5-mini"],
+    "ollama": ["llama3.1:8b"]
+  },
+  "presets": {
+    "fast": {
+      "backend": "openai",
+      "model": "gpt-5-mini",
+      "deployment_tier": "cloud",
+      "description": "Fast cloud preset for non-sensitive workloads."
+    },
+    "balanced": {
+      "backend": "claude",
+      "model": "claude-sonnet-4-20250514",
+      "deployment_tier": "cloud",
+      "description": "Balanced cloud preset for high-quality explanations."
+    },
+    "audit": {
+      "backend": "claude",
+      "model": "claude-sonnet-4-20250514",
+      "deployment_tier": "hybrid",
+      "description": "Higher-scrutiny preset for audit and compliance review."
+    },
+    "local-only": {
+      "backend": "ollama",
+      "model": "llama3.1:8b",
+      "deployment_tier": "local_only",
+      "description": "On-prem preset for sensitive or regulated workloads."
+    }
+  }
+}
