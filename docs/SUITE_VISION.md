@@ -20,6 +20,15 @@ kebutuhan finance yang memiliki pola kerja serupa:
 
 Modul pertama adalah `cobol-intel`.
 
+Naming kerja yang dipakai saat ini:
+
+- repo publik: `cobol-intel`
+- command line: `cobol-intel`
+- Python package: `cobol_intel`
+
+Artinya, walaupun ada visi suite jangka panjang, identitas project yang
+dipublikasikan sekarang tetap konsisten sebagai `cobol-intel`.
+
 Jika arsitekturnya terbukti sehat di modul ini, pola yang sama dapat dipakai
 ulang untuk modul lain seperti:
 
@@ -72,7 +81,7 @@ Penjelasan singkat:
 Hal-hal berikut sengaja belum diputuskan sekarang:
 
 - nama suite final
-- namespace Python final
+- namespace suite final di atas `cobol-intel`
 - monorepo layout final tingkat suite
 - apakah shared code nanti dipisah ke package khusus
 - shared finance domain types seperti `Money`, `DateRange`, dan sejenisnya
