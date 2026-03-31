@@ -15,10 +15,12 @@ from cobol_intel.service.pipeline import (
     discover_cobol_files,
     to_ast_output,
 )
+from cobol_intel.service.explain import explain_path
 
 __all__ = [
     "AnalysisRunResult",
     "analyze_path",
     "discover_cobol_files",
+    "explain_path",
     "to_ast_output",
 ]
