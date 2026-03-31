@@ -6,21 +6,21 @@ Log pengerjaan project. Update setiap sesi kerja.
 
 ## Status Saat Ini
 
-**Fase**: 2 - LLM Integration (ready to start)
+**Fase**: 3 - Output And Governance Foundations (in progress)
 **Mulai**: 2026-03-31
 **Target MVP**: -
-**Test Status**: 134/134 pass
+**Test Status**: 186/186 pass
 
 Catatan:
 
-- Fase 0 gate items sudah selesai: parser comparison, ADR-006 parser decision,
-  run_id ADR-014, dan AST contract awal.
-- Fase 1 sudah selesai: parser hardening, circular `COPY` detection, corpus 10
-  sample, regression baseline, artifact writer, dan CLI analyze/graph sudah jalan.
-- Repo siap masuk Fase 2 untuk `llm/`, context builder, dan explanation engine.
-- Coverage parser juga sudah diperluas untuk subset enterprise yang lebih dekat
-  ke finance workloads: `EXEC SQL`, file I/O statements, `COPY ... REPLACING`,
-  `PROCEDURE DIVISION USING`, `UNSTRING`, dan `INSPECT`.
+- Fase 0 dan 1 selesai: parser, analysis, artifacts, CLI analyze/graph.
+- Fase 2 selesai: LLM backend interface, Claude + OpenAI + Ollama backends, context builder,
+  explanation engine (3 modes), traceability, evaluation test, CLI explain command.
+- Hardening tambahan selesai: manifest tetap konsisten saat sebagian explain gagal,
+  top-level summary punya source refs, prompt budgeting lebih menjaga rules/graph,
+  dan jumlah paragraph explanation dibatasi agar cost/latency tetap terkendali.
+- Fondasi governance Phase 3 sudah mulai masuk: audit/event log, manifest governance,
+  sensitivity scoring, approved model registry, dan redaction helper.
 
 ---
 
@@ -104,21 +104,26 @@ Catatan:
 
 ### Fase 2 - LLM Integration
 
-- [ ] `LLMBackend` abstract interface di `llm/`
-- [ ] `ClaudeBackend` implementation
-- [ ] `OllamaBackend` implementation
-- [ ] Context builder: AST + rules + graph -> LLM-ready prompt
-- [ ] Smart chunker berbasis struktur paragraph/section
-- [ ] Explanation engine mode `technical`
-- [ ] Explanation engine mode `business`
-- [ ] Explanation engine mode `audit`
-- [ ] Semua output LLM include traceability ke artifact sumber
-- [ ] Evaluation test: raw LLM vs pipeline + LLM pada sample yang sama
+- [x] `LLMBackend` abstract interface di `llm/backend.py`
+- [x] `ClaudeBackend` implementation (`llm/claude_backend.py`)
+- [x] `OllamaBackend` implementation (`llm/ollama_backend.py`)
+- [x] Context builder: AST + rules + graph -> LLM-ready prompt (`llm/context_builder.py`)
+- [x] Smart chunker berbasis struktur paragraph/section (truncation + per-paragraph prompts)
+- [x] Explanation engine mode `technical`
+- [x] Explanation engine mode `business`
+- [x] Explanation engine mode `audit`
+- [x] Semua output LLM include traceability ke artifact sumber (`ParagraphExplanation.source`)
+- [x] Evaluation test: raw LLM vs pipeline + LLM pada sample yang sama
 
 ---
 
 ### Fase 3 - Output And Polish
 
+- [x] Audit/event log artifact untuk analysis dan explain runs
+- [x] Governance summary pada manifest
+- [x] Approved model registry + preset helper
+- [x] Sensitivity classification helper
+- [x] Redaction helper untuk prompt cloud yang sensitif
 - [ ] Documentation generator output Markdown per program
 - [ ] HTML report generator
 - [ ] Change impact analyzer
@@ -192,13 +197,39 @@ Catatan:
 - Tambah sample corpus baru untuk SQL, file batch, dan copybook replacing
 - Rerun suite: **134/134 pass**
 
+### 2026-03-31 - Phase 2 LLM Integration
+
+- Implementasi `LLMBackend` abstract interface dan `LLMResponse` dataclass
+- Implementasi `ClaudeBackend` (Anthropic SDK) dan `OllamaBackend` (local model)
+- Implementasi `context_builder.py` — transforms Phase 1 artifacts ke structured prompts
+  dengan system prompt per mode (technical/business/audit) dan smart truncation
+- Implementasi `explainer.py` — orchestrates context builder + backend, produces
+  `ExplanationOutput` dengan traceability via `SourceRef` per paragraph
+- Implementasi `service/explain.py` — service layer untuk Phase 1 + LLM explanation
+- CLI `explain` command sekarang fully functional dengan `--model` dan `--mode` flags
+- CLI `analyze` sekarang bisa opsional run LLM explanation via `--model` flag
+- Contract: `ExplanationOutput` schema dengan `ParagraphExplanation` dan traceability
+- Tests: contract (5), context builder (10), explainer mock (7), evaluation (5)
+- Rerun suite: **164/164 pass**
+
+### 2026-04-01 - Governance Foundations
+
+- Tambah contract baru untuk governance dan audit events
+- Manifest sekarang menyimpan governance summary dan artifact logs
+- Service layer sekarang menulis `logs/audit_events.jsonl` untuk analysis dan explain runs
+- Tambah approved model registry + preset helper untuk `claude`, `openai`, dan `ollama`
+- Tambah sensitivity classifier dan redaction helper untuk cloud prompts
+- Tambah unit/contract tests untuk governance, policy, dan audit logging
+- Rerun suite: **186/186 pass**
+
 ---
 
 ## Blockers And Open Questions
 
 - Error handling ADR-013 baru lengkap setelah service layer menangani partial
   failures lebih detail
-- Fase 2 belum dimulai: `llm/` backends, context builder, dan explanation engine
+- Read-only API untuk consume artifacts dan audit logs belum diimplementasi
+- Fine-tuned model backend (Fase 4) belum dimulai
 
 ---
 

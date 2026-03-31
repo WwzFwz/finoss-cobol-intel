@@ -344,6 +344,71 @@ Catatan:
 
 ---
 
+## Governance And Safe Integration
+
+Untuk fintech dan bank, explain pipeline tidak cukup hanya "bisa jalan".
+Pipeline juga harus menjawab:
+
+- model apa yang dipakai?
+- data seberapa sensitif?
+- apakah prompt ke cloud sudah di-redact?
+- siapa yang menjalankan run ini?
+- berapa token yang terpakai?
+
+Karena itu, arsitektur sekarang menambahkan dua lapisan governance ringan:
+
+1. `governance` summary di `manifest.json`
+2. `logs/audit_events.jsonl` sebagai event trail per run
+
+Tujuannya bukan menggantikan SIEM atau audit DB perusahaan, tetapi menyediakan
+source-of-truth teknis dari tool ini yang nanti bisa di-forward ke sistem mereka.
+
+### Audit Log Ownership
+
+Audit log tool ini mencatat hal yang biasanya tidak ada di audit log bisnis
+perusahaan:
+
+- backend dan model yang dipakai
+- success/failure tiap explain step
+- sensitivity hasil klasifikasi artifact
+- redaction yang diterapkan
+- token usage per run
+
+Jika perusahaan ingin menyimpan semuanya di DB atau logging stack mereka, source
+ini bisa di-forward. Tetapi event teknis sebaiknya tetap dihasilkan oleh tool.
+
+### Sensitivity And Prompt Redaction
+
+Sebelum prompt dikirim ke backend cloud, artifact AST bisa diklasifikasikan
+menjadi:
+
+- `low`
+- `moderate`
+- `high`
+- `restricted`
+
+Untuk workload `high` dan `restricted`, prompt cloud sebaiknya melalui redaction
+helper. Ini bukan solusi DLP yang sempurna, tetapi cukup menjadi pagar awal
+supaya integrasi tidak "langsung kirim apa saja ke API".
+
+### Model Registry And Presets
+
+Approved model registry dipakai untuk mencegah backend/model dipilih secara liar.
+Preset awal yang disediakan:
+
+- `fast`
+- `balanced`
+- `audit`
+- `local-only`
+
+Preset ini adalah fondasi untuk policy routing di fase berikutnya. Tujuannya:
+
+- cloud untuk workload non-sensitif
+- local/on-prem untuk workload sensitif
+- approval model lebih mudah diaudit
+
+---
+
 ## On-Premise Deployment
 
 Untuk bank yang tidak bisa mengirim kode ke cloud, deployment baseline adalah:

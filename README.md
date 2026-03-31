@@ -32,7 +32,7 @@ raw COBOL.
 
 - Phase 0 complete: parser evaluation, contracts, and project foundations
 - Phase 1 complete: static analysis core, artifact writing, corpus coverage, and regression baselines
-- Phase 2 ready: LLM backend abstraction and explanation workflows are the next major step
+- Phase 2 complete: LLM backend abstraction, explain workflows, and multi-backend support are available
 
 See [docs/PROGRESS.md](docs/PROGRESS.md) for the implementation timeline.
 
@@ -113,10 +113,31 @@ cobol-intel graph samples --copybook-dir copybooks
 
 ```bash
 cobol-intel explain samples/complex/payment.cbl --model claude --mode technical
+cobol-intel explain samples/complex/payment.cbl --model openai --mode business
+cobol-intel explain samples/complex/payment.cbl --model ollama --mode audit
 ```
 
-`explain` is currently a Phase 2 placeholder. The static-analysis pipeline is
-already functional; the LLM-facing explanation layer is the next planned stage.
+Supported explanation backends:
+
+- `claude`
+- `openai`
+- `ollama`
+
+The `explain` command runs the static-analysis pipeline first, then generates
+traceable summaries and paragraph explanations from the selected backend.
+
+## Enterprise Readiness Foundations
+
+The repo now includes the first governance building blocks needed for regulated
+environments:
+
+- `logs/audit_events.jsonl` for analysis and explain runs
+- manifest-level `governance` summary with sensitivity and token usage
+- approved model registry and preset helpers for `claude`, `openai`, and `ollama`
+- sensitivity scoring and cloud redaction helpers for safer LLM integration
+
+See [docs/FINTECH_READINESS.md](docs/FINTECH_READINESS.md) for the current
+readiness checklist and remaining gaps.
 
 ## Output Artifacts
 
@@ -130,6 +151,7 @@ artifacts/<project_slug>/<run_id>/
   graphs/
   rules/
   docs/
+  logs/
 ```
 
 For a concrete example, see [docs/ARTIFACT_EXAMPLE.md](docs/ARTIFACT_EXAMPLE.md).
@@ -154,6 +176,7 @@ More detail is in [docs/SUITE_VISION.md](docs/SUITE_VISION.md).
 - [Project Plan](docs/PLAN.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Architecture Decisions](docs/DECISIONS.md)
+- [Fintech Readiness](docs/FINTECH_READINESS.md)
 - [Parser Evaluation](docs/PARSER_EVALUATION.md)
 - [Artifact Example](docs/ARTIFACT_EXAMPLE.md)
 - [Research](docs/RESEARCH.md)

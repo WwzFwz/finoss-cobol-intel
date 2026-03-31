@@ -371,16 +371,23 @@ GUI boleh dibuat nanti, tetapi:
 
 ### Fase 2 - LLM Integration (Minggu 6-8)
 
-- [ ] `service` orchestration untuk menjalankan pipeline end-to-end
-- [ ] Context builder dari AST ke prompt yang siap untuk LLM
-- [ ] Smart chunking untuk program besar
-- [ ] Pluggable model interface
-- [ ] Explanation engine untuk technical mode
-- [ ] Explanation engine untuk business mode
-- [ ] Traceability: output LLM menunjuk ke source artifact dan lokasi program
+- [x] `service` orchestration untuk menjalankan pipeline end-to-end
+- [x] Context builder dari AST ke prompt yang siap untuk LLM
+- [x] Smart chunking untuk program besar
+- [x] Pluggable model interface
+- [x] Explanation engine untuk technical mode
+- [x] Explanation engine untuk business mode
+- [x] Traceability: output LLM menunjuk ke source artifact dan lokasi program
 
-### Fase 3 - Documentation And Output (Minggu 9-10)
+### Fase 3 - Output, Governance, And Integration (Minggu 9-10)
 
+- [x] Audit/event log artifact (`logs/audit_events.jsonl`) untuk analysis dan explain runs
+- [x] Governance summary pada `manifest.json` untuk sensitivity, deployment tier, dan token usage
+- [x] Approved model registry + preset helpers untuk backend LLM
+- [x] Sensitivity classification helper untuk artifact COBOL
+- [x] Redaction helper untuk prompt cloud pada workload sensitif
+- [ ] Retry / timeout / fallback policy per backend
+- [ ] Token budget / quota policy
 - [ ] Documentation generator untuk Markdown
 - [ ] Change impact analyzer
 - [ ] HTML report generator
@@ -449,7 +456,7 @@ Hal-hal ini penting, tetapi tidak perlu dibangun sekarang:
 
 - Multi-user project persistence penuh
 - RBAC dan auth enterprise
-- Audit log user activity tingkat platform
+- Full auth, RBAC, dan approval workflow tingkat platform
 - GUI interaktif penuh
 - Fine-tuned model produksi
 - Dynamic `CALL` resolution yang sempurna untuk semua kasus
