@@ -1,0 +1,16 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. LINKDEMO.
+
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       01  WS-MESSAGE              PIC X(20) VALUE "READY".
+
+       LINKAGE SECTION.
+       01  LK-REQUEST.
+           05  LK-ACCOUNT          PIC X(10).
+           05  LK-AMOUNT           PIC 9(7)V99.
+
+       PROCEDURE DIVISION.
+       MAIN-PROGRAM.
+           DISPLAY WS-MESSAGE.
+           GOBACK.

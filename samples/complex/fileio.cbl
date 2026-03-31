@@ -1,0 +1,22 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. FILEIO.
+
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT TXN-FILE ASSIGN TO "TXN.DAT".
+
+       DATA DIVISION.
+       FILE SECTION.
+       FD  TXN-FILE.
+       01  TXN-RECORD.
+           05  TXN-ID              PIC 9(6).
+           05  TXN-AMOUNT          PIC 9(5)V99.
+
+       WORKING-STORAGE SECTION.
+       01  WS-TOTAL                PIC 9(7)V99 VALUE 0.
+
+       PROCEDURE DIVISION.
+       MAIN-PROGRAM.
+           DISPLAY "FILE READY".
+           STOP RUN.
