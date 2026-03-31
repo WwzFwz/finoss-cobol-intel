@@ -1,0 +1,15 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. RECON.
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       01  WS-LEDGER-BALANCE       PIC 9(7)V99 VALUE 0.
+       01  WS-BANK-BALANCE         PIC 9(7)V99 VALUE 0.
+       01  WS-DIFF                 PIC 9(7)V99 VALUE 0.
+       PROCEDURE DIVISION.
+       MAIN-PROGRAM.
+           COMPUTE WS-DIFF = WS-LEDGER-BALANCE - WS-BANK-BALANCE.
+           IF WS-DIFF = 0
+               DISPLAY "RECONCILED"
+           ELSE
+               DISPLAY "MISMATCH"
+           END-IF.
