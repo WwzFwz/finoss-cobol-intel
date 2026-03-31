@@ -4,6 +4,7 @@ Setiap keputusan teknis penting dicatat di sini beserta alasannya.
 Ini penting untuk project besar supaya tidak lupa kenapa sesuatu dibuat seperti itu.
 
 Format setiap entry:
+
 - **Status**: Proposed / Accepted / Deprecated
 - **Context**: Situasi yang memaksa keputusan ini
 - **Decision**: Apa yang diputuskan
@@ -11,7 +12,7 @@ Format setiap entry:
 
 ---
 
-## ADR-001: Python sebagai Primary Language
+## ADR-001: Python Sebagai Primary Language
 
 **Status**: Accepted
 
@@ -20,30 +21,33 @@ Format setiap entry:
 **Decision**: Python 3.11+
 
 **Consequences**:
-- (+) Ekosistem terlengkap untuk LLM integration (anthropic, openai, huggingface)
-- (+) `lark`, `antlr4` tersedia untuk parsing
+
+- (+) Ekosistem terlengkap untuk LLM integration
+- (+) `lark`, `antlr4-python3-runtime`, dan tooling data mudah dipakai
 - (+) Familiar di komunitas data science / ML
 - (+) Mudah untuk packaging dan distribusi
 - (-) Lebih lambat dari Go/Rust untuk parsing intensif
-- (-) GIL bisa jadi bottleneck untuk parallelism
+- (-) GIL bisa jadi bottleneck untuk parallelism tertentu
 
 ---
 
-## ADR-002: Static Analysis Sebelum LLM, Bukan Langsung LLM
+## ADR-002: Static Analysis Sebelum LLM
 
 **Status**: Accepted
 
-**Context**: Bisa saja langsung kirim COBOL ke LLM API dan minta penjelasan.
+**Context**: Secara teknis bisa saja langsung mengirim COBOL ke LLM dan meminta penjelasan.
 
-**Decision**: Selalu jalankan static analysis pipeline dulu (parse, resolve, build graph), baru LLM menerima output yang sudah terstruktur.
+**Decision**: Selalu jalankan static analysis pipeline dulu, baru LLM menerima
+output yang sudah terstruktur.
 
 **Consequences**:
-- (+) LLM dapat input yang bersih, akurasi jauh lebih tinggi
-- (+) Hemat token (tidak kirim seluruh raw COBOL)
-- (+) Bisa jalan tanpa LLM sama sekali untuk fitur static analysis
-- (+) LLM bisa diganti tanpa mengubah pipeline
-- (-) Lebih kompleks untuk dibangun
-- (-) Parser harus robust untuk berbagai dialek COBOL
+
+- (+) LLM mendapat input yang lebih bersih
+- (+) Akurasi penjelasan dan ekstraksi rule lebih tinggi
+- (+) Hemat token karena tidak mengirim seluruh raw COBOL
+- (+) Pipeline tetap berguna walaupun backend LLM tidak tersedia
+- (-) Arsitektur lebih kompleks
+- (-) Parser harus cukup robust untuk berbagai dialect COBOL
 
 ---
 
@@ -51,71 +55,347 @@ Format setiap entry:
 
 **Status**: Accepted
 
-**Context**: Pengguna enterprise (bank) tidak bisa kirim kode ke cloud. Pengguna individual mau pakai API yang mudah.
+**Context**: Pengguna enterprise sering tidak bisa mengirim source code ke cloud,
+sementara developer individual ingin setup yang cepat.
 
-**Decision**: Abstraksi `LLMBackend` interface. Implementasi: Claude API, OpenAI, Ollama (local), fine-tuned model.
+**Decision**: Gunakan abstraksi backend LLM yang pluggable.
+
+Implementasi target:
+
+- OpenAI API
+- Claude API
+- Ollama
+- Local model backend
 
 **Consequences**:
-- (+) Bank bisa pakai fully on-premise dengan Ollama
-- (+) Developer bisa pakai API untuk setup cepat
-- (+) Fine-tuned model bisa di-plug in nanti
-- (-) Perlu maintain multiple backend implementations
-- (-) Testing lebih kompleks
+
+- (+) Bank bisa pakai fully on-premise dengan local model
+- (+) Developer bisa pakai API untuk iterasi cepat
+- (+) Fine-tuned model bisa ditambahkan nanti
+- (-) Perlu maintain beberapa backend implementation
+- (-) Testing jadi lebih kompleks
 
 ---
 
-## ADR-004: CLI-First, Web UI Nanti
+## ADR-004: CLI-First, GUI Later
 
 **Status**: Accepted
 
-**Context**: Bisa bangun web UI dulu supaya lebih "impressive" untuk demo.
+**Context**: Web UI memang lebih menarik untuk demo, tetapi terlalu cepat
+membangunnya berisiko mendorong arsitektur yang belum matang.
 
-**Decision**: Fokus ke CLI yang solid dulu. Web UI adalah fase berikutnya.
+**Decision**: Fokus ke CLI dan artifact output lebih dulu. GUI datang belakangan
+setelah service layer dan output contract stabil.
 
 **Consequences**:
-- (+) Developer dapat value lebih cepat
-- (+) Lebih mudah di-integrate ke CI/CD pipeline bank
-- (+) Lebih mudah di-test
-- (-) Kurang visual untuk demo ke non-technical audience
-- Mitigasi: output HTML report yang bisa dibuka di browser
+
+- (+) Value lebih cepat untuk developer
+- (+) Lebih mudah diintegrasikan ke script dan CI/CD
+- (+) Lebih mudah diuji
+- (+) GUI nanti punya fondasi yang lebih stabil
+- (-) Demo awal kurang visual untuk non-technical audience
+- Mitigasi: hasil HTML report dan Mermaid bisa dipakai untuk demo awal
 
 ---
 
-## ADR-005: Output Format
+## ADR-005: Output Format Utama
 
 **Status**: Accepted
 
-**Context**: Perlu format output yang berguna untuk berbagai pengguna.
+**Context**: Perlu format output yang berguna untuk berbagai use case.
 
 **Decision**:
-- **JSON**: untuk integrasi programatik dan tooling lain
-- **Markdown**: untuk dokumentasi yang bisa di-render di GitHub/Confluence
-- **HTML**: untuk report yang bisa dibagikan ke stakeholder non-teknis
-- **Mermaid**: untuk diagram yang embedded di Markdown
+
+- **JSON** untuk integrasi programatik dan regression testing
+- **Markdown** untuk dokumentasi yang bisa dirender di GitHub atau wiki
+- **HTML** untuk report stakeholder non-teknis
+- **Mermaid** untuk diagram yang bisa di-embed di Markdown
 
 **Consequences**:
-- (+) Fleksibel untuk berbagai use case
-- (+) Markdown bisa langsung di-push ke repo sebagai docs
-- (-) Perlu generator untuk setiap format
+
+- (+) Fleksibel untuk banyak kebutuhan
+- (+) JSON menjadi base contract lintas interface
+- (+) Markdown bisa langsung dipush ke repo sebagai docs
+- (-) Perlu generator untuk beberapa format output
 
 ---
 
-## ADR-006: Lark sebagai COBOL Parser
+## ADR-006: Parser Default — ANTLR4
 
-**Status**: Proposed (perlu validasi)
+**Status**: Accepted (2026-03-31)
 
-**Context**: Perlu parser yang bisa handle COBOL grammar yang kompleks.
+**Context**: Parser adalah fondasi project, tetapi memilih parser hanya dari
+preferensi library terlalu berisiko. Fase 0 membuat PoC menggunakan `lark`
+(Earley) dan `ANTLR4` pada 5 sample COBOL nyata (fixed-format, free-format,
+COPY, COMP-3, REDEFINES, OCCURS, CALL, EVALUATE, PERFORM VARYING, array access).
 
-**Options yang dipertimbangkan**:
-1. `lark` — Python, Earley/LALR parser, bisa handle ambiguous grammar
-2. `antlr4` — Java-based tapi ada Python runtime, grammar COBOL sudah tersedia
-3. GnuCOBOL — C compiler, terlalu kompleks untuk di-embed
-4. Custom regex — tidak cukup robust untuk production
+Kedua parser berhasil parse semua 5 sample — 32/32 test lark, 27/27 test ANTLR4.
 
-**Decision**: Mulai dengan `lark` menggunakan grammar custom. Evaluasi ANTLR4 COBOL grammar sebagai alternatif.
+**Decision**: **ANTLR4 sebagai parser default.** Lark tetap tersedia sebagai
+fallback dan untuk quick prototyping.
+
+Alasan utama:
+
+1. Keyword/identifier priority diselesaikan secara natural oleh lexer rule
+   ordering — tidak perlu workaround priority annotations seperti di lark
+2. Community COBOL85 grammar tersedia di `antlr/grammars-v4` sebagai upgrade path
+3. Strongly-typed visitor pattern lebih maintainable untuk project besar
+4. Tooling dan debugging ecosystem lebih mature
+
+Mitigasi risiko Java dependency:
+
+- Generated Python files di-commit ke repo
+- Contributor hanya butuh Java kalau mengubah grammar
+- End user tidak perlu Java sama sekali
+
+Evaluasi lengkap: `docs/PARSER_EVALUATION.md`
 
 **Consequences**:
-- (+) Pure Python, mudah di-maintain
-- (+) Earley parser bisa handle grammar yang ambigu
-- (-) Grammar COBOL harus ditulis sendiri (effort besar)
-- (-) Mungkin lambat untuk file sangat besar
+
+- (+) Keputusan parser berbasis bukti dari PoC nyata, bukan tebakan
+- (+) Natural keyword priority tanpa manual annotations
+- (+) Community grammar COBOL85 tersedia untuk scaling ke dialect nyata
+- (+) Strongly-typed context objects dan visitor pattern
+- (+) Lark tetap tersedia sebagai fallback
+- (-) Butuh Java untuk regenerate parser saat grammar berubah
+- (-) Generated code (~3000 baris) harus di-commit ke repo
+
+---
+
+## ADR-007: Versioned Contracts Untuk Semua Artifact JSON
+
+**Status**: Accepted
+
+**Context**: Tanpa output contract yang stabil, CLI, API, GUI, dan integrasi
+eksternal akan mudah rusak saat shape JSON berubah.
+
+**Decision**: Semua artifact JSON harus didefinisikan di `contracts/` dan wajib
+memiliki `schema_version`.
+
+Artifact minimal untuk MVP:
+
+- `manifest.json`
+- AST output
+- dependency graph output
+- business rules output
+
+**Consequences**:
+
+- (+) Integrasi lebih aman
+- (+) Contract test bisa ditulis sejak awal
+- (+) API dan GUI nanti punya bahasa bersama
+- (-) Perubahan output menjadi lebih disiplin dan sedikit lebih lambat
+
+---
+
+## ADR-008: File-System Artifact Store Sebelum Database Persistence
+
+**Status**: Accepted
+
+**Context**: Project butuh model run dan artifact yang rapi, tetapi persistence
+enterprise penuh masih premature untuk MVP.
+
+**Decision**: Simpan hasil analisis dalam artifact directory yang stabil di
+filesystem. Jangan bangun database persistence penuh di fase awal.
+
+Contoh layout:
+
+```text
+artifacts/<project_slug>/<run_id>/
+```
+
+**Consequences**:
+
+- (+) Sederhana untuk MVP
+- (+) Mudah diinspeksi manual
+- (+) Nanti bisa dipetakan ke object storage atau DB
+- (-) Belum optimal untuk multi-user dan query kompleks
+
+---
+
+## ADR-009: Package Boundaries Harus Dikunci Sebelum Coding
+
+**Status**: Accepted
+
+**Context**: Tanpa boundary yang jelas, CLI, parser, formatter, dan LLM layer
+akan mudah saling menempel dan sulit direfactor saat API atau GUI ditambahkan.
+
+**Decision**: Kunci package layout berikut sejak awal:
+
+```text
+src/cobol_intel/
+  core/
+  contracts/
+  parsers/
+  analysis/
+  llm/
+  outputs/
+  service/
+  cli/
+```
+
+Rules:
+
+- `cli` tidak menyimpan business logic
+- `analysis` tidak bergantung pada backend LLM
+- `contracts` menjadi bahasa bersama lintas layer
+- interface baru nanti masuk lewat `service`
+
+**Consequences**:
+
+- (+) Refactor di masa depan lebih murah
+- (+) GUI dan API nanti lebih mudah ditambahkan
+- (+) Testing bisa difokuskan per layer
+- (-) Perlu disiplin boundary sejak awal
+
+---
+
+## ADR-010: Testing Strategy Harus Berbasis Corpus, Contract, Dan Regression
+
+**Status**: Accepted
+
+**Context**: Menulis "akan ada benchmark dan test suite" terlalu vague untuk
+project parser-heavy seperti ini.
+
+**Decision**: Testing dibagi menjadi empat lapisan:
+
+1. corpus tests untuk parser dan dialect coverage
+2. contract tests untuk JSON schema
+3. regression tests untuk expected artifact
+4. evaluation tests untuk membandingkan raw LLM vs preprocessing pipeline
+
+**Consequences**:
+
+- (+) Risiko regression parser lebih cepat terdeteksi
+- (+) Output contract tetap stabil
+- (+) LLM dibuktikan sebagai enhancer, bukan fondasi tunggal
+- (-) Butuh effort dataset dan maintenance fixture
+
+---
+
+## ADR-011: API Ditunda Sampai Service Layer Dan Contract Stabil
+
+**Status**: Accepted
+
+**Context**: Ada kebutuhan integrasi ke sistem lain, tetapi membangun API terlalu
+cepat bisa menghasilkan endpoint yang langsung obsolete setelah contract berubah.
+
+**Decision**: API bukan prioritas fase awal. Tambahkan read-only API prototype
+setelah service layer dan artifact contract stabil.
+
+**Consequences**:
+
+- (+) Backend tidak dikunci terlalu cepat oleh desain API
+- (+) Kontrak lebih matang saat API diperkenalkan
+- (+) GUI nanti bisa dibangun di atas interface yang lebih sehat
+- (-) Integrasi via HTTP belum tersedia di MVP paling awal
+
+---
+
+## ADR-013: Error Handling Strategy — Partial Artifact Dengan Warnings
+
+**Status**: Accepted
+
+**Context**: COBOL codebase di bank nyata tidak pernah 100% bersih. Selalu ada
+file dengan dialect tidak standar, COPYBOOK yang hilang, atau syntax edge case
+yang tidak di-handle parser. Belum ada keputusan eksplisit tentang apa yang
+terjadi saat pipeline gagal di sebagian file.
+
+Tanpa keputusan ini, implementer akan membuat pilihan secara tidak sadar dan
+hasilnya tidak konsisten antar modul.
+
+**Decision**: Pipeline menggunakan strategi **partial artifact dengan warnings**,
+bukan fail-fast.
+
+Aturannya:
+
+- Jika satu file gagal di-parse, file itu dicatat di `manifest.json` bagian
+  `errors`, pipeline tetap lanjut ke file berikutnya.
+- Artifact yang berhasil tetap ditulis ke filesystem.
+- `manifest.json` mendapat status `partially_completed` jika ada error, bukan
+  `completed`.
+- Jika **semua** file gagal, status menjadi `failed`.
+- Setiap error harus menyertakan: file path, modul yang gagal, pesan error,
+  dan jika bisa — baris yang bermasalah.
+
+Contoh manifest dengan partial failure:
+
+```json
+{
+  "schema_version": "1.0",
+  "run_id": "run_20260331_001",
+  "status": "partially_completed",
+  "artifacts": {
+    "ast": ["ast/CALCINT.json", "ast/PAYREC.json"]
+  },
+  "warnings": [
+    "COPYBOOK 'CUSTMAST' tidak ditemukan, field dari COPYBOOK ini tidak di-resolve"
+  ],
+  "errors": [
+    {
+      "file": "LEGACY01.cbl",
+      "module": "parser",
+      "message": "Unexpected token di baris 342: EXEC CICS — dialect CICS belum didukung",
+      "line": 342
+    }
+  ]
+}
+```
+
+**Fail-fast hanya berlaku** untuk kondisi yang menunjukkan setup yang salah,
+bukan konten COBOL yang bermasalah. Contoh: direktori input tidak ada, backend
+LLM tidak bisa dihubungi dan mode LLM wajib diaktifkan.
+
+**Consequences**:
+
+- (+) Tool tetap berguna walaupun sebagian file tidak bisa diproses
+- (+) User tahu persis file mana yang bermasalah dan kenapa
+- (+) Partial artifact tetap bisa dipakai untuk file yang berhasil
+- (+) Konsisten antar modul — semua ikut aturan yang sama
+- (-) Implementasi lebih kompleks dari sekadar raise exception
+- (-) User perlu selalu cek `manifest.json` dan tidak bisa asumsikan run = sukses
+
+---
+
+## ADR-012: Enterprise Auth Dan RBAC Bukan Scope MVP
+
+**Status**: Accepted
+
+**Context**: Auth, RBAC, dan audit platform memang penting untuk enterprise,
+tetapi belum perlu dibangun pada fase open-source MVP.
+
+**Decision**: Fitur-fitur tersebut ditunda. Arsitektur hanya perlu memastikan
+bahwa penambahannya nanti tidak terhalang.
+
+**Consequences**:
+
+- (+) Fokus tim tetap pada parser, contracts, dan pipeline inti
+- (+) MVP lebih cepat selesai
+- (-) Belum siap langsung menjadi multi-user enterprise platform
+
+---
+
+## ADR-014: Run ID Format — Timestamp + Random Suffix
+
+**Status**: Accepted (2026-03-31)
+
+**Context**: Artifact directory layout menggunakan `run_id` sebagai nama folder
+(`artifacts/<project>/<run_id>/`). Format belum diputuskan — opsi utama adalah
+UUID v4 atau timestamp-based.
+
+**Decision**: Format `run_YYYYMMDD_HHMMSS_XXXX` dimana:
+
+- Timestamp dalam UTC
+- `XXXX` adalah 4-char hex random suffix untuk uniqueness dalam detik yang sama
+
+Contoh: `run_20260331_143052_a7f3`
+
+**Consequences**:
+
+- (+) Human-readable — mudah diinspeksi di filesystem dan log
+- (+) Sortable secara natural (ls, sort)
+- (+) Cukup unique untuk single-user CLI tool
+- (-) Tidak cocok untuk distributed system multi-node (tapi itu bukan scope MVP)
+- (-) Tidak sependek UUID v4 untuk embedding di URL nanti
+
+Implementasi: `src/cobol_intel/contracts/run_id.py`
