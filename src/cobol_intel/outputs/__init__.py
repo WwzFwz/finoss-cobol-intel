@@ -17,6 +17,11 @@ from cobol_intel.outputs.writers import (
     write_jsonl_artifact,
     write_text_artifact,
 )
+from cobol_intel.outputs.doc_generator import (
+    ProgramDocumentation,
+    generate_program_doc,
+    generate_project_report,
+)
 
 __all__ = [
     "ensure_directory",
@@ -25,4 +30,7 @@ __all__ = [
     "write_json_artifact",
     "write_jsonl_artifact",
     "write_text_artifact",
+    "ProgramDocumentation",
+    "generate_program_doc",
+    "generate_project_report",
 ]

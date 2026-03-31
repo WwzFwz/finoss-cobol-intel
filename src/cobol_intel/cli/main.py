@@ -109,6 +109,70 @@ def graph(
     typer.echo(f"Graph artifacts written to: {result.run_dir / 'graphs'}")
 
 
+@app.command()
+def impact(
+    run_dir: str = typer.Argument(..., help="Path to a completed run directory"),
+    changed_program: list[str] = typer.Option(None, "--changed-program", "-p", help="Program ID that changed"),
+    changed_field: list[str] = typer.Option(None, "--changed-field", "-f", help="Data field name that changed"),
+    max_depth: int = typer.Option(3, "--max-depth", help="Max call graph traversal depth"),
+) -> None:
+    """Analyze change impact from a completed analysis run."""
+    import json
+    from cobol_intel.analysis.impact_analyzer import analyze_impact
+    from cobol_intel.contracts.ast_output import ASTOutput
+    from cobol_intel.contracts.graph_output import CallGraphOutput
+    from cobol_intel.contracts.manifest import Manifest
+    from cobol_intel.contracts.rules_output import RulesOutput
+
+    run_path = Path(run_dir)
+    manifest = Manifest(**json.loads((run_path / "manifest.json").read_text(encoding="utf-8")))
+
+    call_graph = None
+    for g in manifest.artifacts.graphs:
+        if "call_graph.json" in g:
+            call_graph = CallGraphOutput(**json.loads((run_path / g).read_text(encoding="utf-8")))
+
+    asts: dict[str, ASTOutput] = {}
+    for a in manifest.artifacts.ast:
+        ast = ASTOutput(**json.loads((run_path / a).read_text(encoding="utf-8")))
+        asts[ast.program_id or Path(ast.file_path).stem] = ast
+
+    rules_map: dict[str, RulesOutput] = {}
+    for r in manifest.artifacts.rules:
+        ro = RulesOutput(**json.loads((run_path / r).read_text(encoding="utf-8")))
+        rules_map[ro.program_id or Path(ro.file_path).stem] = ro
+
+    report = analyze_impact(
+        changed_programs=changed_program or [],
+        changed_fields=changed_field or [],
+        call_graph=call_graph or CallGraphOutput(),
+        rules_by_program=rules_map,
+        asts_by_program=asts,
+        max_depth=max_depth,
+    )
+    typer.echo(f"[cobol-intel] impact: {report.total_impacted} program(s) affected")
+    for entity in report.impacted_entities:
+        typer.echo(f"  {entity.program_id} ({entity.impact_type.value}, depth={entity.distance}): {entity.reason}")
+
+
+@app.command()
+def docs(
+    run_dir: str = typer.Argument(..., help="Path to a completed run directory"),
+) -> None:
+    """Generate documentation from a completed analysis run."""
+    from cobol_intel.service.doc_service import generate_docs
+
+    run_path = Path(run_dir)
+    if not (run_path / "manifest.json").exists():
+        typer.echo(f"Error: No manifest.json found in {run_dir}", err=True)
+        raise typer.Exit(1)
+
+    generated = generate_docs(run_path)
+    typer.echo(f"[cobol-intel] docs: generated {len(generated)} file(s)")
+    for path in generated:
+        typer.echo(f"  {path}")
+
+
 def _resolve_backend(model: str):
     """Resolve LLM backend from model name."""
     from cobol_intel.llm.backend import LLMBackend
