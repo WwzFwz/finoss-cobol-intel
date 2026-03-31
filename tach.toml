@@ -1,0 +1,40 @@
+source_roots = ["src"]
+
+[[modules]]
+path = "cobol_intel.contracts"
+depends_on = []
+
+[[modules]]
+path = "cobol_intel.core"
+depends_on = ["cobol_intel.contracts"]
+
+[[modules]]
+path = "cobol_intel.parsers"
+depends_on = ["cobol_intel.contracts", "cobol_intel.core"]
+
+[[modules]]
+path = "cobol_intel.analysis"
+depends_on = ["cobol_intel.contracts", "cobol_intel.core", "cobol_intel.parsers"]
+
+[[modules]]
+path = "cobol_intel.llm"
+depends_on = ["cobol_intel.contracts", "cobol_intel.core"]
+
+[[modules]]
+path = "cobol_intel.outputs"
+depends_on = ["cobol_intel.contracts", "cobol_intel.core"]
+
+[[modules]]
+path = "cobol_intel.service"
+depends_on = [
+    "cobol_intel.contracts",
+    "cobol_intel.core",
+    "cobol_intel.parsers",
+    "cobol_intel.analysis",
+    "cobol_intel.llm",
+    "cobol_intel.outputs",
+]
+
+[[modules]]
+path = "cobol_intel.cli"
+depends_on = ["cobol_intel.contracts", "cobol_intel.service"]

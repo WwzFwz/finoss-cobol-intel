@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Testing
+.pytest_cache/
+.pytest_tmp/
+pytest_tmp_workspace/
+pytest-cache-files-*/
+tests/.cache/
+.coverage
+htmlcov/
+tmp*/
+
+# Artifacts (generated output, tidak di-commit)
+artifacts/
+tests_runtime_artifacts/
+tests_runtime_artifacts_cli/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+.claude
