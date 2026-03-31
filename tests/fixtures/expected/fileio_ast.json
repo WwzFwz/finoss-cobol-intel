@@ -3,6 +3,7 @@
   "program_id": "FILEIO",
   "file_path": "samples/complex/fileio.cbl",
   "parser_name": "antlr4",
+  "procedure_using": [],
   "data_items": [
     {
       "level": 1,

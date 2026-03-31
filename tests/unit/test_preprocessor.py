@@ -95,6 +95,17 @@ def test_copybook_circular_dependency_warning():
     assert any("Circular COPY dependency detected" in warning for warning in result.warnings)
 
 
+def test_copybook_replacing_resolution():
+    copybook_dir = REPO_ROOT / "copybooks"
+    source = "       COPY ACCTTMPL REPLACING ==:PREFIX:== BY WS-CUST.\n"
+    pp = COBOLPreprocessor(copybook_dirs=[str(copybook_dir)])
+    result = pp.preprocess(source)
+
+    assert "WS-CUST-RECORD" in result.text
+    assert "WS-CUST-ID" in result.text
+    assert "WS-CUST-NAME" in result.text
+
+
 def test_blank_lines_removed():
     source = "IDENTIFICATION DIVISION.\n\n\nPROGRAM-ID. HELLO.\n"
     pp = COBOLPreprocessor(source_format="free")

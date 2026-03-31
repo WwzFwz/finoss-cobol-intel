@@ -18,7 +18,7 @@ def test_ast_output_serializes_with_required_fields():
     ast = ASTOutput(program_id="HELLO", parser_name="antlr4")
     data = ast.model_dump()
     required = {"schema_version", "program_id", "file_path", "parser_name",
-                "data_items", "paragraphs", "copybooks_used"}
+                "procedure_using", "data_items", "paragraphs", "copybooks_used"}
     assert required.issubset(data.keys())
 
 
@@ -72,5 +72,6 @@ def test_ast_output_with_source_ref():
 def test_ast_output_empty_program():
     ast = ASTOutput()
     assert ast.program_id is None
+    assert ast.procedure_using == []
     assert ast.data_items == []
     assert ast.paragraphs == []
