@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from cobol_intel.contracts.manifest import ArtifactIndex, Manifest, RunError, RunStatus
+from cobol_intel.contracts.manifest import ArtifactIndex, ErrorCode, Manifest, RunError, RunStatus
 
 
 def make_manifest(**kwargs) -> Manifest:
@@ -31,7 +31,7 @@ def test_manifest_completed_has_no_errors():
 
 
 def test_manifest_partial_with_errors():
-    error = RunError(file="LEGACY.cbl", module="parser", message="Unsupported dialect", line=42)
+    error = RunError(file="LEGACY.cbl", code=ErrorCode.PARSE_SYNTAX, module="parser", message="Unsupported dialect", line=42)
     m = make_manifest(status=RunStatus.PARTIALLY_COMPLETED, errors=[error])
     assert not m.is_success()
     assert m.has_errors()

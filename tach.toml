@@ -38,3 +38,7 @@ depends_on = [
 [[modules]]
 path = "cobol_intel.cli"
 depends_on = ["cobol_intel.contracts", "cobol_intel.service"]
+
+[[modules]]
+path = "cobol_intel.api"
+depends_on = ["cobol_intel.contracts", "cobol_intel.service"]

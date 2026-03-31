@@ -6,7 +6,7 @@ from pathlib import Path
 
 from cobol_intel.contracts.explanation_output import ExplanationMode, ExplanationOutput
 from cobol_intel.contracts.governance import AuditEvent
-from cobol_intel.contracts.manifest import RunError, RunStatus
+from cobol_intel.contracts.manifest import ErrorCode, RunError, RunStatus
 from cobol_intel.llm.backend import LLMBackend
 from cobol_intel.llm.explainer import explain_program
 from cobol_intel.llm.policy import (
@@ -77,7 +77,7 @@ def explain_path(
             )
             run_result.manifest.warnings.append(message)
             run_result.manifest.errors.append(
-                RunError(file=result.file_path, module="budget", message=message)
+                RunError(file=result.file_path, code=ErrorCode.LLM_BUDGET, module="budget", message=message)
             )
             append_audit_event(
                 audit_log_path,
@@ -206,10 +206,16 @@ def explain_path(
                 )
                 break
         except Exception as exc:
-            module_name = "policy" if isinstance(exc, PolicyViolationError) else "llm"
+            if isinstance(exc, PolicyViolationError):
+                error_code = ErrorCode.POLICY_VIOLATION
+                module_name = "policy"
+            else:
+                error_code = ErrorCode.LLM_BACKEND
+                module_name = "llm"
             run_result.manifest.errors.append(
                 RunError(
                     file=result.file_path,
+                    code=error_code,
                     module=module_name,
                     message=str(exc),
                 )

@@ -22,9 +22,26 @@ class RunStatus(str, Enum):
     FAILED = "failed"
 
 
+class ErrorCode(str, Enum):
+    """Structured error codes for operational monitoring and alerting."""
+
+    PARSE_SYNTAX = "E1001"
+    PARSE_COPYBOOK = "E1002"
+    ANALYSIS_GRAPH = "E2001"
+    ANALYSIS_RULES = "E2002"
+    LLM_BACKEND = "E3001"
+    LLM_TIMEOUT = "E3002"
+    LLM_BUDGET = "E3003"
+    POLICY_VIOLATION = "E3004"
+    IMPACT_ANALYSIS = "E4001"
+    IO_WRITE = "E5001"
+    CONFIG_INVALID = "E6001"
+
+
 class RunError(BaseModel):
     file: str
-    module: str
+    code: ErrorCode = ErrorCode.PARSE_SYNTAX
+    module: str = ""
     message: str
     line: int | None = None
 

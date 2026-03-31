@@ -11,7 +11,7 @@ from cobol_intel.analysis.call_graph import build_call_graph
 from cobol_intel.analysis.rules_extractor import extract_rules
 from cobol_intel.contracts.ast_output import ASTOutput, DataItemOut, ParagraphOut, StatementOut
 from cobol_intel.contracts.governance import AuditEvent
-from cobol_intel.contracts.manifest import ArtifactIndex, Manifest, RunError, RunStatus
+from cobol_intel.contracts.manifest import ArtifactIndex, ErrorCode, Manifest, RunError, RunStatus
 from cobol_intel.contracts.rules_output import RulesOutput
 from cobol_intel.contracts.run_id import generate_run_id
 from cobol_intel.outputs import (
@@ -90,7 +90,7 @@ def analyze_path(
 
         if parsed.errors:
             manifest.errors.extend(
-                RunError(file=str(file_path), module="parser", message=error)
+                RunError(file=str(file_path), code=ErrorCode.PARSE_SYNTAX, module="parser", message=error)
                 for error in parsed.errors
             )
         manifest.warnings.extend(preprocessed.warnings)
