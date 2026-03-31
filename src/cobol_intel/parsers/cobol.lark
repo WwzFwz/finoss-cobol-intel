@@ -1,0 +1,209 @@
+// COBOL 85 Subset Grammar — cobol-intel PoC
+// Assumes preprocessed input: uppercase, fixed-format stripped, PIC strings quoted
+// Parser: Earley (handles ambiguity)
+
+start: program
+
+program: identification_division environment_division? data_division? procedure_division?
+
+// ============================================================
+// IDENTIFICATION DIVISION
+// ============================================================
+identification_division: "IDENTIFICATION" "DIVISION" DOT "PROGRAM-ID" DOT NAME DOT
+
+// ============================================================
+// ENVIRONMENT DIVISION
+// ============================================================
+environment_division: "ENVIRONMENT" "DIVISION" DOT input_output_section?
+
+input_output_section: "INPUT-OUTPUT" "SECTION" DOT file_control_paragraph?
+
+file_control_paragraph: "FILE-CONTROL" DOT select_entry*
+
+select_entry: "SELECT" NAME "ASSIGN" "TO" (NAME | STRING_LIT) DOT
+
+// ============================================================
+// DATA DIVISION
+// ============================================================
+data_division: "DATA" "DIVISION" DOT data_section*
+
+data_section: working_storage_section
+            | file_section
+            | linkage_section
+
+working_storage_section: "WORKING-STORAGE" "SECTION" DOT data_entry*
+
+file_section: "FILE" "SECTION" DOT file_entry*
+
+linkage_section: "LINKAGE" "SECTION" DOT data_entry*
+
+file_entry: file_description
+          | data_entry
+
+file_description: ("FD" | "SD") NAME DOT
+
+data_entry: copy_entry
+          | condition_entry
+          | data_item
+
+copy_entry: "COPY" NAME DOT
+
+condition_entry: "88" NAME "VALUE" literal DOT
+
+data_item: NUMBER NAME data_clause* DOT
+
+?data_clause: pic_clause
+            | usage_clause
+            | value_clause
+            | occurs_clause
+            | redefines_clause
+
+pic_clause: "PIC" STRING_LIT
+          | "PICTURE" STRING_LIT
+
+usage_clause: USAGE_TYPE
+
+USAGE_TYPE.2: /PACKED-DECIMAL|COMP-[35]|COMP|BINARY|DISPLAY/
+
+value_clause: "VALUE" literal
+
+occurs_clause: "OCCURS" NUMBER "TIMES"?
+
+redefines_clause: "REDEFINES" NAME
+
+// ============================================================
+// PROCEDURE DIVISION
+// ============================================================
+procedure_division: "PROCEDURE" "DIVISION" DOT paragraph*
+
+paragraph: NAME DOT sentence*
+
+sentence: statement+ DOT
+
+?statement: display_stmt
+          | move_stmt
+          | compute_stmt
+          | add_stmt
+          | subtract_stmt
+          | multiply_stmt
+          | perform_inline_stmt
+          | perform_simple_stmt
+          | call_stmt
+          | if_stmt
+          | evaluate_stmt
+          | string_stmt
+          | stop_stmt
+          | goback_stmt
+
+display_stmt: "DISPLAY" operand+
+
+move_stmt: "MOVE" operand "TO" name_ref+
+
+compute_stmt: "COMPUTE" name_ref "=" expression
+
+add_stmt: "ADD" operand "TO" operand ("GIVING" name_ref)?
+
+subtract_stmt: "SUBTRACT" operand "FROM" operand ("GIVING" name_ref)?
+
+multiply_stmt: "MULTIPLY" operand "BY" operand ("GIVING" name_ref)?
+
+perform_inline_stmt: "PERFORM" "VARYING" NAME "FROM" operand "BY" operand "UNTIL" condition statement* "END-PERFORM"
+
+perform_simple_stmt: "PERFORM" NAME
+
+call_stmt: "CALL" STRING_LIT "USING" name_ref+
+
+if_stmt: "IF" condition statement* else_clause? "END-IF"
+
+else_clause: "ELSE" statement*
+
+evaluate_stmt: "EVALUATE" eval_subject when_clause+ "END-EVALUATE"
+
+eval_subject: "TRUE" -> eval_true
+            | operand -> eval_operand
+
+when_clause: "WHEN" "OTHER" statement* -> when_other
+           | "WHEN" when_match statement* -> when_value
+
+when_match: condition_name
+          | literal
+
+condition_name: NAME
+
+string_stmt: "STRING" operand+ "DELIMITED" "BY" delim_target "INTO" name_ref
+
+delim_target: "SIZE" -> delim_size
+            | operand -> delim_value
+
+stop_stmt: "STOP" "RUN"
+
+goback_stmt: "GOBACK"
+
+// ============================================================
+// CONDITIONS
+// ============================================================
+condition: simple_condition (and_or simple_condition)*
+
+and_or: "AND" | "OR"
+
+?simple_condition: comparison
+                 | condition_ref
+                 | "NOT" simple_condition -> not_condition
+
+comparison: operand comp_op operand
+
+condition_ref: NAME
+
+comp_op: ">"  -> op_gt
+       | "<"  -> op_lt
+       | ">=" -> op_gte
+       | "<=" -> op_lte
+       | "="  -> op_eq
+       | "NOT" "=" -> op_neq
+
+// ============================================================
+// EXPRESSIONS (arithmetic)
+// ============================================================
+expression: term (add_op term)*
+
+add_op: "+" -> op_add
+      | "-" -> op_sub
+
+term: factor (mul_op factor)*
+
+mul_op: "*" -> op_mul
+      | "/" -> op_div
+
+?factor: operand
+       | "(" expression ")"
+
+// ============================================================
+// OPERANDS
+// ============================================================
+?operand: name_ref
+        | literal
+
+name_ref: NAME "(" expression ")" -> indexed_ref
+        | NAME -> simple_ref
+
+?literal: STRING_LIT -> string_literal
+        | DECIMAL   -> decimal_literal
+        | NUMBER    -> number_literal
+        | fig_const
+
+fig_const: "SPACE"  | "SPACES"
+         | "ZERO"   | "ZEROS"  | "ZEROES"
+         | "HIGH-VALUE"  | "HIGH-VALUES"
+         | "LOW-VALUE"   | "LOW-VALUES"
+
+// ============================================================
+// TERMINALS
+// ============================================================
+DECIMAL.2: /[0-9]+\.[0-9]+/
+NUMBER: /[0-9]+/
+NAME.-1: /[A-Z][A-Z0-9]([A-Z0-9-]*[A-Z0-9])?/ | /[A-Z]/
+STRING_LIT: /"[^"]*"/ | /'[^']*'/
+DOT: "."
+
+%import common.WS
+%ignore WS
