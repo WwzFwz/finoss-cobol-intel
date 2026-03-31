@@ -9,7 +9,7 @@ Log pengerjaan project. Update setiap sesi kerja.
 **Fase**: 2 - LLM Integration (ready to start)
 **Mulai**: 2026-03-31
 **Target MVP**: -
-**Test Status**: 124/124 pass
+**Test Status**: 134/134 pass
 
 Catatan:
 
@@ -18,6 +18,9 @@ Catatan:
 - Fase 1 sudah selesai: parser hardening, circular `COPY` detection, corpus 10
   sample, regression baseline, artifact writer, dan CLI analyze/graph sudah jalan.
 - Repo siap masuk Fase 2 untuk `llm/`, context builder, dan explanation engine.
+- Coverage parser juga sudah diperluas untuk subset enterprise yang lebih dekat
+  ke finance workloads: `EXEC SQL`, file I/O statements, `COPY ... REPLACING`,
+  `PROCEDURE DIVISION USING`, `UNSTRING`, dan `INSPECT`.
 
 ---
 
@@ -178,6 +181,16 @@ Catatan:
 - Tambah corpus smoke test untuk ANTLR4 dan Lark pada seluruh sample corpus
 - Tambah regression baseline committed untuk AST, rules, dan call graph
 - Rerun suite: **124/124 pass**
+
+### 2026-03-31 - Parser Coverage Expansion
+
+- Tambah dukungan parser untuk `EXEC SQL`
+- Tambah file I/O statements: `OPEN`, `READ`, `WRITE`, `REWRITE`, `CLOSE`
+- Tambah `COPY ... REPLACING` di preprocessor
+- Tambah `PROCEDURE DIVISION USING` ke parse result dan AST artifact
+- Tambah dukungan `UNSTRING` dan `INSPECT`
+- Tambah sample corpus baru untuk SQL, file batch, dan copybook replacing
+- Rerun suite: **134/134 pass**
 
 ---
 

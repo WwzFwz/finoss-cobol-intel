@@ -43,6 +43,29 @@ explanations more accurate and traceable back to source artifacts.
 
 See [docs/PROGRESS.md](docs/PROGRESS.md) for the current implementation status.
 
+## Current COBOL Coverage
+
+The current parser is intentionally scoped to a practical MVP subset. It is
+tested on committed samples that cover:
+
+- fixed-format and free-format source
+- `COPY`, circular copy detection, and `COPY ... REPLACING`
+- `WORKING-STORAGE`, `FILE`, and `LINKAGE` sections
+- `PIC`, `COMP-3`, `REDEFINES`, `OCCURS`, and level-88 conditions
+- `PROCEDURE DIVISION USING`
+- `IF`, `EVALUATE`, `PERFORM`, `CALL`, `STRING`, `UNSTRING`, `INSPECT`,
+  `GOBACK`, and `STOP RUN`
+- file I/O statements: `OPEN`, `READ`, `WRITE`, `REWRITE`, `CLOSE`
+- `EXEC SQL` subset suitable for static analysis context extraction
+
+Known gaps that remain future work include:
+
+- `PERFORM THRU`, `GO TO`, and other legacy control-flow variants
+- `EXEC CICS`
+- broader `EXEC SQL` coverage for more complex statements and vendor-specific syntax
+- `SEARCH`, `SEARCH ALL`, and richer `INSPECT` / `UNSTRING` variants
+- `OCCURS DEPENDING ON`, `INDEXED BY`, `RENAMES`, and other enterprise dialect features
+
 ## Quick Start
 
 ```bash

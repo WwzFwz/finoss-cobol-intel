@@ -193,6 +193,61 @@ Setelah itu baru parser default dikunci.
 
 ---
 
+## Known Dialect Gaps
+
+Coverage parser saat ini sudah cukup untuk MVP static analysis, tetapi belum
+berarti project ini sudah menangani semua dialek COBOL nyata di bank atau
+mainframe enterprise.
+
+### Sudah Dicakup Di MVP
+
+- fixed-format dan free-format source
+- `IDENTIFICATION`, `ENVIRONMENT`, `DATA`, dan `PROCEDURE DIVISION`
+- `WORKING-STORAGE`, `FILE`, dan `LINKAGE SECTION`
+- `COPY`, circular `COPY` warning, dan `COPY ... REPLACING`
+- `PIC`, `COMP-3`, `REDEFINES`, `OCCURS`, level-88 conditions
+- `PROCEDURE DIVISION USING`
+- `IF`, `EVALUATE`, `PERFORM`, `CALL`, `STRING`, `UNSTRING`, `INSPECT`,
+  `GOBACK`, `STOP RUN`
+- file I/O statements: `OPEN`, `READ`, `WRITE`, `REWRITE`, `CLOSE`
+- `EXEC SQL` subset untuk static analysis context extraction
+
+### Belum Dicakup Penuh
+
+- `EXEC CICS`
+- `EXEC SQL` yang lebih luas: multi-statement, host variable edge cases,
+  vendor-specific SQL embedding, dan statement selain subset saat ini
+- `PERFORM THRU` / `THROUGH`
+- `GO TO`, `ALTER`, dan control-flow legacy lain
+- `SEARCH`, `SEARCH ALL`, dan varian `UNSTRING` / `INSPECT` yang lebih kaya
+- `OCCURS DEPENDING ON`, `INDEXED BY`, `RENAMES`
+- vendor-specific syntax dari IBM Enterprise COBOL, Micro Focus, dan GnuCOBOL
+
+### Dialect Roadmap Yang Paling Bernilai
+
+Untuk codebase finance nyata, urutan prioritas yang paling masuk akal adalah:
+
+1. perluasan `EXEC SQL`
+2. `PERFORM THRU`
+3. `SEARCH` / `SEARCH ALL`
+4. varian `UNSTRING` dan `INSPECT` yang lebih luas
+5. `EXEC CICS` jika target Anda benar-benar mainframe transaction systems
+
+Alasan prioritas ini:
+
+- `EXEC SQL` sangat umum di sistem core banking dan batch processing yang
+  terhubung ke DB2 atau database lain, jadi perluasannya tetap punya ROI tinggi.
+- `PERFORM THRU` dan `SEARCH` sering muncul di codebase legacy yang lebih tua.
+- varian `UNSTRING` / `INSPECT` yang lebih kaya penting untuk cleaning dan
+  parsing string pada batch processing finance.
+- `EXEC CICS` sangat penting di sebagian bank besar, tetapi tidak semua fintech
+  atau modernization use case membutuhkannya pada fase awal.
+
+Dengan kata lain, target terbaik berikutnya bukan "semua dialek", tetapi
+"enterprise-heavy subset yang paling sering muncul di finance workloads".
+
+---
+
 ## Smart Chunking Strategy
 
 Untuk program besar yang melebihi context window LLM:
