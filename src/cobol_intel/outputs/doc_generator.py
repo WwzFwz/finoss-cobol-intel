@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from cobol_intel.contracts.ast_output import ASTOutput, DataItemOut
+from cobol_intel.contracts.data_flow_output import DataFlowGraph
+from cobol_intel.contracts.dead_code_output import DeadCodeReport
 from cobol_intel.contracts.explanation_output import ExplanationOutput
 from cobol_intel.contracts.graph_output import CallGraphOutput
 from cobol_intel.contracts.manifest import Manifest
@@ -24,6 +26,8 @@ def generate_program_doc(
     rules: RulesOutput | None = None,
     call_graph: CallGraphOutput | None = None,
     explanation: ExplanationOutput | None = None,
+    data_flow: DataFlowGraph | None = None,
+    dead_code: DeadCodeReport | None = None,
 ) -> ProgramDocumentation:
     """Generate comprehensive Markdown documentation for one COBOL program."""
     program_id = ast.program_id or Path(ast.file_path).stem or "UNKNOWN"
@@ -98,6 +102,43 @@ def generate_program_doc(
                 for edge in incoming:
                     lines.append(f"- `{edge.caller}`")
                 lines.append("")
+
+    # Data flow diagram
+    if data_flow and data_flow.edges:
+        lines.extend(["## Data Flow", ""])
+        lines.extend([
+            "```mermaid",
+            data_flow.to_mermaid(),
+            "```",
+            "",
+        ])
+        if data_flow.entry_fields:
+            lines.append(f"**Entry fields**: {', '.join(data_flow.entry_fields)}")
+        if data_flow.output_fields:
+            lines.append(f"**Output fields**: {', '.join(data_flow.output_fields)}")
+        if data_flow.entry_fields or data_flow.output_fields:
+            lines.append("")
+
+    # Dead code findings
+    if dead_code and dead_code.items:
+        lines.extend(["## Dead Code Findings", ""])
+        lines.append(
+            f"**{dead_code.total_dead}** finding(s), "
+            f"**{dead_code.dead_code_percentage}%** unreachable paragraphs"
+        )
+        lines.append("")
+        lines.append("| Type | Name | Confidence | Reason |")
+        lines.append("|------|------|------------|--------|")
+        for item in dead_code.items:
+            lines.append(
+                f"| {item.type.value} | {item.name} "
+                f"| {item.confidence.value} | {item.reason} |"
+            )
+        lines.append("")
+        if dead_code.warnings:
+            for w in dead_code.warnings:
+                lines.append(f"> {w}")
+            lines.append("")
 
     # LLM paragraph explanations
     if explanation and explanation.paragraph_explanations:

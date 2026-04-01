@@ -50,6 +50,7 @@ class ArtifactIndex(BaseModel):
     ast: list[str] = Field(default_factory=list)
     graphs: list[str] = Field(default_factory=list)
     rules: list[str] = Field(default_factory=list)
+    analysis: list[str] = Field(default_factory=list)
     docs: list[str] = Field(default_factory=list)
     logs: list[str] = Field(default_factory=list)
 

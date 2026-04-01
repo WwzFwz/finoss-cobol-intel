@@ -6,13 +6,31 @@ from pathlib import Path
 
 import typer
 
+from cobol_intel import __version__
 from cobol_intel.service import analyze_path
+
+
+def _version_callback(value: bool) -> None:
+    if value:
+        typer.echo(f"cobol-intel {__version__}")
+        raise typer.Exit()
+
 
 app = typer.Typer(
     name="cobol-intel",
     help="Understand, document, and analyze legacy COBOL codebases.",
     no_args_is_help=True,
 )
+
+
+@app.callback()
+def main(
+    version: bool = typer.Option(
+        False, "--version", "-V", callback=_version_callback,
+        is_eager=True, help="Show version and exit.",
+    ),
+) -> None:
+    """COBOL Intelligence Platform — static analysis + LLM for legacy COBOL."""
 
 _BACKENDS = {"claude", "openai", "ollama", "none"}
 
@@ -44,7 +62,10 @@ def analyze(
         None, "--max-tokens-per-run", help="Token cap per explain run",
     ),
 ) -> None:
-    """Analyze a COBOL program or directory and produce artifacts."""
+    """Parse, analyze, and produce artifacts (AST, rules, call graph, CFG, data flow, dead code).
+
+    Optionally runs LLM explanation when --model is specified.
+    """
     dirs = copybook_dir or _default_copybook_dirs(path)
 
     if model != "none":
@@ -109,7 +130,11 @@ def explain(
         True, "--cache/--no-cache", help="Enable/disable cache",
     ),
 ) -> None:
-    """Explain what a COBOL program does using an LLM backend."""
+    """Run full analysis + LLM explanation pipeline.
+
+    Produces all static analysis artifacts, then generates natural language
+    explanations via the chosen LLM backend (Claude, OpenAI, or Ollama).
+    """
     from cobol_intel.contracts.explanation_output import ExplanationMode
     from cobol_intel.service.explain import explain_path
 
@@ -144,7 +169,10 @@ def graph(
         None, "--copybook-dir", help="COPYBOOK directories",
     ),
 ) -> None:
-    """Build dependency and call graph for a COBOL codebase."""
+    """Build inter-program call graph and dependency graph.
+
+    Outputs JSON adjacency list and Mermaid diagram to the graphs/ directory.
+    """
     result = analyze_path(
         path=path,
         output_dir=output_dir,
@@ -167,7 +195,11 @@ def impact(
         3, "--max-depth", help="Max call graph traversal depth",
     ),
 ) -> None:
-    """Analyze change impact from a completed analysis run."""
+    """Answer "if I change X, what breaks?" from a completed analysis run.
+
+    Uses call graph traversal and field reference scanning to find affected
+    programs, paragraphs, and business rules.
+    """
     import json
 
     from cobol_intel.analysis.impact_analyzer import analyze_impact
@@ -237,7 +269,11 @@ def docs(
         help="Output format: markdown, html",
     ),
 ) -> None:
-    """Generate documentation from a completed analysis run."""
+    """Generate Markdown or HTML documentation from a completed analysis run.
+
+    Produces per-program docs and a consolidated project report with data
+    dictionary, business rules, data flow diagrams, and dead code findings.
+    """
     from cobol_intel.service.doc_service import generate_docs
 
     run_path = Path(run_dir)

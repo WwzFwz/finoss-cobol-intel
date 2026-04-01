@@ -8,6 +8,10 @@ from pathlib import Path
 
 from cobol_intel import __version__
 from cobol_intel.analysis.call_graph import build_call_graph
+from cobol_intel.analysis.cfg_builder import build_cfg
+from cobol_intel.analysis.data_flow import analyze_data_flow
+from cobol_intel.analysis.dead_code import detect_dead_code
+from cobol_intel.analysis.reference_indexer import build_reference_index
 from cobol_intel.analysis.rules_extractor import extract_rules
 from cobol_intel.contracts.ast_output import ASTOutput, DataItemOut, ParagraphOut, StatementOut
 from cobol_intel.contracts.governance import AuditEvent
@@ -107,10 +111,14 @@ def analyze_path(
     ast_dir = ensure_directory(run_dir / "ast")
     graphs_dir = ensure_directory(run_dir / "graphs")
     rules_dir = ensure_directory(run_dir / "rules")
+    analysis_dir = ensure_directory(run_dir / "analysis")
     docs_dir = ensure_directory(run_dir / "docs")
 
+    # Build AST outputs and write AST artifacts
+    ast_outputs: list[ASTOutput] = []
     for result in successful_results:
         ast_output = to_ast_output(result, file_path=result.file_path)
+        ast_outputs.append(ast_output)
         artifact_name = _artifact_name(result.program_id, result.file_path)
         rel_path = Path("ast") / f"{artifact_name}.json"
         write_json_artifact(run_dir / rel_path, ast_output)
@@ -125,6 +133,34 @@ def analyze_path(
         md_rel = Path("docs") / f"{artifact_name}_rules.md"
         write_text_artifact(run_dir / md_rel, render_rules_markdown(rules_output))
         manifest.artifacts.docs.append(md_rel.as_posix())
+
+    # Deep analysis: reference index, CFG, data flow, dead code per program
+    for ast_output in ast_outputs:
+        artifact_name = _artifact_name(ast_output.program_id, ast_output.file_path)
+
+        ref_index = build_reference_index(ast_output)
+        ref_rel = Path("analysis") / f"{artifact_name}_references.json"
+        write_json_artifact(run_dir / ref_rel, ref_index)
+        manifest.artifacts.analysis.append(ref_rel.as_posix())
+
+        cfg = build_cfg(ast_output)
+        cfg_rel = Path("analysis") / f"{artifact_name}_cfg.json"
+        write_json_artifact(run_dir / cfg_rel, cfg)
+        manifest.artifacts.analysis.append(cfg_rel.as_posix())
+
+        data_flow = analyze_data_flow(ast_output, reference_index=ref_index)
+        df_rel = Path("analysis") / f"{artifact_name}_dataflow.json"
+        write_json_artifact(run_dir / df_rel, data_flow)
+        manifest.artifacts.analysis.append(df_rel.as_posix())
+
+        df_mermaid_rel = Path("analysis") / f"{artifact_name}_dataflow.mmd"
+        write_text_artifact(run_dir / df_mermaid_rel, data_flow.to_mermaid())
+        manifest.artifacts.analysis.append(df_mermaid_rel.as_posix())
+
+        dead_code = detect_dead_code(ast_output, cfg=cfg, reference_index=ref_index)
+        dc_rel = Path("analysis") / f"{artifact_name}_deadcode.json"
+        write_json_artifact(run_dir / dc_rel, dead_code)
+        manifest.artifacts.analysis.append(dc_rel.as_posix())
 
     graph_json_rel = Path("graphs") / "call_graph.json"
     write_json_artifact(run_dir / graph_json_rel, call_graph)

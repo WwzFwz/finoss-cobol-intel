@@ -33,12 +33,19 @@ def test_analyze_path_writes_phase1_artifacts():
     assert result.manifest.artifacts.ast
     assert result.manifest.artifacts.graphs
     assert result.manifest.artifacts.rules
+    assert result.manifest.artifacts.analysis
     assert result.manifest.artifacts.docs
 
     call_graph_path = result.run_dir / "graphs" / "call_graph.json"
     summary_path = result.run_dir / "docs" / "summary.md"
     assert call_graph_path.exists()
     assert summary_path.exists()
+
+    # Verify deep analysis artifacts exist
+    analysis_dir = result.run_dir / "analysis"
+    assert analysis_dir.exists()
+    analysis_files = list(analysis_dir.glob("*.json"))
+    assert len(analysis_files) >= 4  # at least 4 types per program
 
 
 def test_analyze_path_marks_successful_run_completed():

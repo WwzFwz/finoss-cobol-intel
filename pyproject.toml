@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cobol-intel"
-version = "0.2.0"
+version = "0.3.0"
 description = "Open-source platform for understanding, documenting, and analyzing legacy COBOL codebases using static analysis and LLM"
 readme = "README.md"
 requires-python = ">=3.11"

@@ -7,12 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-04-01
+
+### Added
+
+- **Control flow graph (CFG) builder**: intra-program CFG with basic blocks, branch/perform/
+  fallthrough edges, and unsupported construct warnings (GO TO, ALTER)
+- **Field reference indexer**: per-statement read/write/condition/call_param classification
+  with aggregated field usage counts
+- **Data flow analyzer**: directed field-to-field flow graph covering MOVE, COMPUTE,
+  READ INTO, WRITE FROM, REWRITE FROM, and CALL USING — with Mermaid diagram output
+- **Dead code detector**: unreachable paragraph detection via BFS reachability, unused
+  data item scanning, and trivially dead branch detection (constant conditions)
+- Pipeline now writes `analysis/` artifacts (CFG, data flow, dead code, references)
+  for every parsed program
+- Doc generator includes data flow diagrams and dead code findings sections
+- `ArtifactIndex` in manifest now tracks `analysis` artifacts
+
 ### Changed
 
 - Hardened API ergonomics with a module-level FastAPI app export, version response parity,
   structured error payloads, and richer run summaries
 - Made explanation cache keys safer against stale outputs by including a context revision
 - Synced progress and fintech-readiness docs with the actual Phase 3 feature set
+- Version bumped to 0.3.0
 
 ### Fixed
 

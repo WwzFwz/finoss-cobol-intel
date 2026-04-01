@@ -390,10 +390,14 @@ GUI boleh dibuat nanti, tetapi:
 - [x] Token budget per explain run
 - [x] Strict policy enforcement untuk workload sensitif pada backend cloud
 - [x] Configurable policy registry via JSON config
-- [ ] Documentation generator untuk Markdown
-- [ ] Change impact analyzer
-- [ ] HTML report generator
-- [ ] CLI polishing
+- [x] Documentation generator untuk Markdown
+- [x] Change impact analyzer
+- [x] HTML report generator
+- [x] Deep analysis: CFG builder, data flow, dead code detection, reference indexer
+- [x] CLI polishing (--version, help text, command docs)
+- [x] CHANGELOG.md dan versioning (0.3.0)
+- [x] Docker image hardened (multi-stage, non-root, health check)
+- [x] README comprehensive
 - [ ] Optional read-only API prototype untuk consume artifact
 - [ ] Output directory dan artifact browsing yang lebih rapi
 - [ ] Finalisasi layout agar siap dikonsumsi GUI nanti

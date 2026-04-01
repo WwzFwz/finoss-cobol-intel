@@ -54,6 +54,10 @@ Artifacts: artifacts/samples/run_20260401_001
 - ANTLR4-based parser (fixed + free format COBOL)
 - COPYBOOK resolution with circular dependency detection
 - Call graph builder and business rules extractor
+- Control flow graph (CFG) with branch, perform, and fallthrough edges
+- Field-level data flow analysis (MOVE, COMPUTE, READ INTO, WRITE FROM, CALL)
+- Dead code detection: unreachable paragraphs, unused data items, dead branches
+- Field reference indexer with read/write/condition classification
 - Data item hierarchy with PIC, COMP-3, REDEFINES, OCCURS, level-88
 
 ### LLM Explanation
@@ -91,6 +95,12 @@ Artifacts: artifacts/samples/run_20260401_001
 | `impact` | Analyze change impact from a completed run |
 | `docs` | Generate documentation (Markdown or HTML) |
 
+Global:
+
+```bash
+cobol-intel --version           # Show version
+```
+
 Key flags:
 
 ```bash
@@ -127,6 +137,7 @@ artifacts/<project>/<run_id>/
   ast/                   # Per-program AST JSON
   graphs/                # Call graph JSON + Mermaid
   rules/                 # Business rules JSON + Markdown
+  analysis/              # CFG, data flow, dead code, references
   docs/                  # Explanations, documentation
   logs/                  # Audit event log
 ```

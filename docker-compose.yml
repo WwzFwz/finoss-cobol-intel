@@ -1,6 +1,7 @@
 services:
   cobol-intel:
     build: .
+    entrypoint: ["cobol-intel-api"]
     ports:
       - "8000:8000"
     volumes:

@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 
 from cobol_intel.contracts.ast_output import ASTOutput
+from cobol_intel.contracts.data_flow_output import DataFlowGraph
+from cobol_intel.contracts.dead_code_output import DeadCodeReport
 from cobol_intel.contracts.explanation_output import ExplanationOutput
 from cobol_intel.contracts.graph_output import CallGraphOutput
 from cobol_intel.contracts.manifest import Manifest
@@ -62,6 +64,25 @@ def generate_docs(run_dir: Path, fmt: str = "markdown") -> list[Path]:
                 key = eo.program_id or Path(eo.file_path).stem
                 explanations[key] = eo
 
+    # Load analysis artifacts (data flow, dead code)
+    data_flows: dict[str, DataFlowGraph] = {}
+    dead_codes: dict[str, DeadCodeReport] = {}
+    for analysis_rel in manifest.artifacts.analysis:
+        if not analysis_rel.endswith(".json"):
+            continue
+        analysis_path = run_dir / analysis_rel
+        if not analysis_path.exists():
+            continue
+        data = json.loads(analysis_path.read_text(encoding="utf-8"))
+        if analysis_rel.endswith("_dataflow.json"):
+            df = DataFlowGraph(**data)
+            key = df.program_id or Path(df.file_path).stem
+            data_flows[key] = df
+        elif analysis_rel.endswith("_deadcode.json"):
+            dc = DeadCodeReport(**data)
+            key = dc.program_id or Path(dc.file_path).stem
+            dead_codes[key] = dc
+
     # Generate per-program docs
     program_docs: list[ProgramDocumentation] = []
     generated_paths: list[Path] = []
@@ -72,6 +93,8 @@ def generate_docs(run_dir: Path, fmt: str = "markdown") -> list[Path]:
             rules=rules_map.get(key),
             call_graph=call_graph,
             explanation=explanations.get(key),
+            data_flow=data_flows.get(key),
+            dead_code=dead_codes.get(key),
         )
         program_docs.append(doc)
 

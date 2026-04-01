@@ -9,7 +9,7 @@ Log pengerjaan project. Update setiap sesi kerja.
 **Fase**: 3 - Output, Integration, And Governance Foundations (stabilizing)
 **Mulai**: 2026-03-31
 **Target MVP**: -
-**Test Status**: 225/225 pass
+**Test Status**: 313/313 pass
 
 Catatan:
 
@@ -25,6 +25,8 @@ Catatan:
   configurable JSON policy config, dan retry/timeout dasar untuk semua backend.
 - Phase 3 sekarang sudah mencakup versioned API, documentation generator,
   HTML report, impact analyzer, parallel explain, cache layer, Docker, dan CI.
+- Deep analysis layer selesai: CFG builder, data flow analyzer, dead code
+  detector, dan reference indexer — semua terintegrasi ke pipeline dan docs.
 - Fokus perbaikan berikutnya bergeser ke trust surface: konsistensi docs,
   kontrak API, portability tooling, observability, dan cache correctness.
 
@@ -134,13 +136,14 @@ Catatan:
 - [x] Token budget per explain run
 - [x] Retry / timeout dasar untuk backend OpenAI, Claude, dan Ollama
 - [x] Configurable policy registry via JSON config
-- [ ] Documentation generator output Markdown per program
-- [ ] HTML report generator
-- [ ] Change impact analyzer
-- [ ] CLI interface lengkap dan terdokumentasi
-- [ ] README dengan demo GIF atau video
-- [ ] Docker image untuk on-premise deployment
-- [ ] `CHANGELOG.md` dan versioning strategy
+- [x] Documentation generator output Markdown per program
+- [x] HTML report generator
+- [x] Change impact analyzer
+- [x] Deep analysis: CFG builder, data flow analyzer, dead code detector, reference indexer
+- [x] CLI interface lengkap dan terdokumentasi
+- [x] README dengan feature overview dan CLI usage
+- [x] Docker image untuk on-premise deployment
+- [x] `CHANGELOG.md` dan versioning strategy (bumped to 0.3.0)
 
 ---
 
@@ -241,6 +244,33 @@ Catatan:
 - Tambah redaction pattern yang lebih luas untuk field PII umum
 - Tambah test untuk policy config, strict block, token budget, dan retry behavior
 - Rerun suite: **190/190 pass**
+
+### 2026-04-01 - Phase 3 Completion: Polish And Packaging
+
+- Bump version ke 0.3.0 (pyproject.toml + `__init__.py`)
+- Update CHANGELOG.md dengan semua fitur 0.3.0
+- CLI polish: tambah `--version` / `-V` flag, perbaiki help text semua command
+- Dockerfile hardened: multi-stage build, non-root user, health check, CLI entrypoint
+- docker-compose update: override entrypoint untuk API mode
+- README update: tambah deep analysis features, `analysis/` dir di artifact tree, `--version`
+- Rerun suite: **313/313 pass**, tach boundaries OK
+
+### 2026-04-01 - Deep Analysis Layer And Pipeline Integration
+
+- Implementasi 4 modul analisis baru:
+  - **CFG Builder**: intra-program control flow graph dengan basic blocks, branch/perform/fallthrough edges
+  - **Reference Indexer**: field-level read/write/condition/call_param classification per statement
+  - **Data Flow Analyzer**: directed field-to-field data flow graph (MOVE, COMPUTE, READ INTO, WRITE FROM, CALL USING)
+  - **Dead Code Detector**: unreachable paragraphs (BFS reachability), unused data items, trivially dead branches
+- Tambah contracts: `cfg_output.py`, `data_flow_output.py`, `dead_code_output.py`, `reference_output.py`
+- Tambah `analysis` field di `ArtifactIndex` manifest untuk track artifacts analisis baru
+- Integrasi ke `pipeline.py`: setiap program yang berhasil di-parse sekarang menghasilkan
+  reference index, CFG, data flow graph (JSON + Mermaid), dan dead code report
+- Integrasi ke doc generator: program docs sekarang include data flow diagram dan dead code findings
+- Integrasi ke doc service: load analysis artifacts dari completed run untuk docs generation
+- Update integration test untuk verifikasi analysis artifacts ditulis ke disk
+- Tambah 57 tests baru (unit + contract) untuk 4 modul analisis
+- Rerun suite: **313/313 pass**, tach boundaries OK
 
 ---
 
