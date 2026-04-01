@@ -6,10 +6,10 @@ Log pengerjaan project. Update setiap sesi kerja.
 
 ## Status Saat Ini
 
-**Fase**: 3 - Output, Integration, And Governance Foundations (stabilizing)
+**Fase**: 4 - Fine-Tuning Infrastructure And Packaging (in progress)
 **Mulai**: 2026-03-31
 **Target MVP**: -
-**Test Status**: 313/313 pass
+**Test Status**: 318/318 pass
 
 Catatan:
 
@@ -27,8 +27,8 @@ Catatan:
   HTML report, impact analyzer, parallel explain, cache layer, Docker, dan CI.
 - Deep analysis layer selesai: CFG builder, data flow analyzer, dead code
   detector, dan reference indexer — semua terintegrasi ke pipeline dan docs.
-- Fokus perbaikan berikutnya bergeser ke trust surface: konsistensi docs,
-  kontrak API, portability tooling, observability, dan cache correctness.
+- Fokus perbaikan berikutnya bergeser ke reproducibility, packaging extras,
+  local-model governance, dan verifikasi training nyata pada compute/GPU.
 
 ---
 
@@ -147,13 +147,20 @@ Catatan:
 
 ---
 
-### Fase 4 - Advanced
+### Fase 4 - Fine-Tuning Infrastructure And Packaging
 
-- [ ] Fine-tune model 7B pada dataset COBOL
-- [ ] Benchmark fine-tuned model vs general LLM untuk COBOL task
-- [ ] Publish model ke HuggingFace
+- [x] Fine-tuning dataset builder (`tools/dataset_builder.py`)
+- [x] LoRA/PEFT fine-tuning script (`tools/finetune.py`)
+- [x] Local fine-tuned model backend (`llm/local_backend.py`)
+- [x] Prompt comparison benchmark (`raw source` vs `structured pipeline`)
+- [x] PyPI build verified (wheel + sdist + py.typed)
+- [x] Fixed pyproject.toml TOML ordering bug (dependencies under project.urls)
+- [x] Read-only API prototype (sudah ada dari Phase 3)
+- [x] Optional extras untuk `local` dan `train`
+- [x] Local backend default dibuat deterministik untuk reproducible offline runs
+- [ ] Run fine-tuning pada GPU (butuh compute)
+- [ ] Publish fine-tuned model ke HuggingFace
 - [ ] Publish package ke PyPI
-- [ ] Read-only API prototype setelah service layer stabil
 
 ---
 
@@ -245,6 +252,29 @@ Catatan:
 - Tambah test untuk policy config, strict block, token budget, dan retry behavior
 - Rerun suite: **190/190 pass**
 
+### 2026-04-02 - Phase 4: Fine-Tuning Infrastructure And PyPI Readiness
+
+- Implementasi `tools/dataset_builder.py`: generate instruction-tuning JSONL
+  dari pipeline output (80 samples dari 13 programs — program-level, paragraph,
+  data flow, dead code pairs). Support Alpaca dan ShareGPT format.
+- Implementasi `tools/finetune.py`: LoRA/PEFT training script untuk
+  CodeLlama-7B atau model sejenis. Support 4-bit QLoRA, checkpoint resume,
+  train/eval split, dan reproducible config saving.
+- Implementasi `src/cobol_intel/llm/local_backend.py`: backend adapter untuk
+  load fine-tuned HuggingFace model secara lokal. Auto-detect PEFT model,
+  Alpaca prompt template matching finetune.py.
+- CLI update: tambah `--model local` ke analyze dan explain commands.
+- PyPI readiness: tambah `py.typed` marker (PEP 561), fix pyproject.toml
+  TOML ordering bug (`dependencies` salah masuk `[project.urls]`), verify
+  wheel build clean (`uv build` → sdist + wheel).
+- Benchmark expansion: tambah `--compare` flag untuk raw vs pipeline prompt
+  strategy comparison (structured sections, traceability, rules reference).
+- Hardening Phase 4 awal: backend `local` sekarang dikenali sebagai
+  `local_only`, packaging extras `.[local]` dan `.[train]` ditambahkan,
+  dan benchmark/docs dirapikan supaya tidak overclaim sebagai live model eval.
+- Parse success rate: 13/13 (100%), avg token savings: 28.6%
+- Rerun suite: **318/318 pass**, tach boundaries OK
+
 ### 2026-04-01 - Phase 3 Completion: Polish And Packaging
 
 - Bump version ke 0.3.0 (pyproject.toml + `__init__.py`)
@@ -278,8 +308,8 @@ Catatan:
 
 - Error handling ADR-013 baru lengkap setelah service layer menangani partial
   failures lebih detail
-- Read-only API untuk consume artifacts dan audit logs belum diimplementasi
-- Fine-tuned model backend (Fase 4) belum dimulai
+- Fine-tuning run nyata di GPU belum divalidasi end-to-end
+- Publish package dan model masih menunggu hardening terakhir
 
 ---
 

@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Fine-tuning dataset builder (`tools/dataset_builder.py`) — generates
+  Alpaca/ShareGPT instruction-tuning pairs from the analysis pipeline
+- LoRA/PEFT fine-tuning script (`tools/finetune.py`) — CodeLlama-7B compatible,
+  QLoRA support, checkpoint resume, reproducible config saving
+- Local fine-tuned model backend (`llm/local_backend.py`) — loads PEFT or
+  standard HuggingFace models for fully offline inference
+- Prompt strategy comparison in benchmark (`tools/benchmark.py --compare`)
+- `py.typed` marker for PEP 561 typed package support
+
+### Fixed
+
+- pyproject.toml TOML ordering: `dependencies` was incorrectly nested under
+  `[project.urls]` instead of `[project]`, causing `uv build` to fail
+- Local backend defaults are now deterministic and install guidance points to
+  package extras for offline inference and training
+- Governance now treats the `local` backend as `local_only` for policy and
+  redaction decisions
+
 ## [0.3.0] - 2026-04-01
 
 ### Added

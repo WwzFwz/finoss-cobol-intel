@@ -32,7 +32,7 @@ def main(
 ) -> None:
     """COBOL Intelligence Platform — static analysis + LLM for legacy COBOL."""
 
-_BACKENDS = {"claude", "openai", "ollama", "none"}
+_BACKENDS = {"claude", "openai", "ollama", "local", "none"}
 
 
 @app.command()
@@ -43,7 +43,7 @@ def analyze(
     ),
     model: str = typer.Option(
         "none", "--model", "-m",
-        help="LLM backend: claude, openai, ollama, none",
+        help="LLM backend: claude, openai, ollama, local, none",
     ),
     mode: str = typer.Option(
         "technical", "--mode",
@@ -102,7 +102,7 @@ def explain(
     ),
     model: str = typer.Option(
         "claude", "--model", "-m",
-        help="LLM backend: claude, openai, ollama",
+        help="LLM backend: claude, openai, ollama, local",
     ),
     mode: str = typer.Option(
         "technical", "--mode",
@@ -300,9 +300,12 @@ def _resolve_backend(model: str):
     elif model == "ollama":
         from cobol_intel.llm.ollama_backend import OllamaBackend
         return OllamaBackend()
+    elif model == "local":
+        from cobol_intel.llm.local_backend import LocalBackend
+        return LocalBackend()
     else:
         raise typer.BadParameter(
-            f"Unknown model: {model}. Use: claude, openai, ollama",
+            f"Unknown model: {model}. Use: claude, openai, ollama, local",
         )
 
 

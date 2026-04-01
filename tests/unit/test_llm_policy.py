@@ -73,6 +73,16 @@ def test_high_sensitivity_cloud_backend_gets_warning():
     assert warnings
 
 
+def test_local_backend_is_treated_as_local_only():
+    deployment_tier, warnings = evaluate_model_policy(
+        backend_name="local",
+        model_id="models/cobol-local",
+        sensitivity=DataSensitivity.RESTRICTED,
+    )
+    assert deployment_tier == DeploymentTier.LOCAL_ONLY
+    assert warnings == []
+
+
 def test_unapproved_model_is_flagged():
     _, warnings = evaluate_model_policy(
         backend_name="openai",
@@ -101,3 +111,4 @@ def test_effective_max_tokens_uses_config_default():
 def test_should_redact_for_sensitive_cloud_runs():
     assert should_redact_prompts("openai", DataSensitivity.RESTRICTED) is True
     assert should_redact_prompts("ollama", DataSensitivity.RESTRICTED) is False
+    assert should_redact_prompts("local", DataSensitivity.RESTRICTED) is False

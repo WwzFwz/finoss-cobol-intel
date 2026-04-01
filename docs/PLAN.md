@@ -402,11 +402,19 @@ GUI boleh dibuat nanti, tetapi:
 - [ ] Output directory dan artifact browsing yang lebih rapi
 - [ ] Finalisasi layout agar siap dikonsumsi GUI nanti
 
-### Fase 4 - Quality And Fine-Tuning (Minggu 11-12+)
+### Fase 4 - Fine-Tuning Infrastructure And Packaging (Minggu 11-12+)
 
-- [ ] Benchmark accuracy vs raw LLM API
-- [ ] Fine-tune model kecil khusus COBOL
-- [ ] Docker image untuk on-premise deployment
+- [x] Prompt comparison benchmark (`raw source` vs `structured pipeline`)
+- [x] Fine-tuning dataset builder (Alpaca + ShareGPT format)
+- [x] LoRA/PEFT fine-tuning script (CodeLlama-7B compatible)
+- [x] Local fine-tuned model backend adapter
+- [x] Optional extras untuk `.[local]` dan `.[train]`
+- [x] Deterministic default untuk offline local inference
+- [x] PyPI build verification (wheel + sdist + py.typed)
+- [x] Docker image untuk on-premise deployment
+- [ ] Run fine-tuning pada GPU compute
+- [ ] Publish model ke HuggingFace
+- [ ] Publish package ke PyPI
 - [ ] Comprehensive test suite
 
 ---

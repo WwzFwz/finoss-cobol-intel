@@ -38,6 +38,7 @@ _DEFAULT_APPROVED_MODELS: dict[str, set[str]] = {
     "claude": {"claude-sonnet-4-20250514"},
     "openai": {"gpt-5-mini"},
     "ollama": {"llama3.1:8b"},
+    "local": set(),
 }
 
 _DEFAULT_PRESETS: dict[str, ModelPreset] = {
@@ -86,7 +87,7 @@ def resolve_preset(name: str, config: PolicyConfig | None = None) -> ModelPreset
 
 def deployment_tier_for_backend(backend_name: str) -> DeploymentTier:
     """Map backend implementations to deployment tiers."""
-    if backend_name == "ollama":
+    if backend_name in {"ollama", "local"}:
         return DeploymentTier.LOCAL_ONLY
     if backend_name in {"claude", "openai"}:
         return DeploymentTier.CLOUD
@@ -115,7 +116,8 @@ def evaluate_model_policy(
         DataSensitivity.RESTRICTED,
     }:
         warnings.append(
-            "Sensitive artifacts are using a cloud backend; prefer the 'local-only' preset or an on-prem model."
+            "Sensitive artifacts are using a cloud backend; prefer the "
+            "'local-only' preset, Ollama, or the local on-prem backend."
         )
 
     return deployment_tier, warnings

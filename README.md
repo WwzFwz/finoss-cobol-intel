@@ -26,6 +26,11 @@ The LLM consumes clean, traceable artifacts — not raw COBOL.
 ```bash
 pip install cobol-intel
 
+# Optional extras
+pip install "cobol-intel[api]"    # REST API
+pip install "cobol-intel[local]"  # local HuggingFace inference
+pip install "cobol-intel[train]"  # fine-tuning scripts
+
 # Analyze a COBOL directory
 cobol-intel analyze samples/ --copybook-dir copybooks
 
@@ -80,10 +85,17 @@ Artifacts: artifacts/samples/run_20260401_001
 - Self-contained HTML with sidebar nav, search, and Mermaid graphs
 - Structured error codes for operational monitoring
 
+### Fine-Tuning
+- Dataset builder: generates instruction-tuning pairs from pipeline output
+- LoRA/PEFT fine-tuning script for CodeLlama-7B or similar (QLoRA supported)
+- Local fine-tuned model backend for fully offline inference
+- Prompt comparison benchmark: raw source vs structured pipeline prompts
+
 ### API & Distribution
 - Versioned REST API (`/api/v1/`) with OpenAPI docs and typed error responses
 - Docker image + docker-compose with optional Ollama sidecar
 - Cross-platform CI (Linux + Windows, Python 3.11 + 3.12)
+- PyPI-ready wheel with PEP 561 type stubs
 
 ## CLI Commands
 
@@ -104,7 +116,7 @@ cobol-intel --version           # Show version
 Key flags:
 
 ```bash
---model claude|openai|ollama    # LLM backend
+--model claude|openai|ollama|local  # LLM backend
 --mode technical|business|audit # Explanation style
 --parallel                      # Enable parallel LLM processing
 --max-workers N                 # Override concurrency limit
@@ -117,7 +129,7 @@ Key flags:
 ## API Usage
 
 ```bash
-pip install cobol-intel[api]
+pip install "cobol-intel[api]"
 cobol-intel-api  # starts on port 8000
 
 curl http://localhost:8000/api/v1/health
@@ -166,6 +178,13 @@ make lint    # ruff + tach
 make test    # pytest
 make bench   # benchmark suite
 make build   # build wheel
+```
+
+Offline inference and training extras:
+
+```bash
+pip install -e ".[local]"  # local HuggingFace backend
+pip install -e ".[train]"  # dataset + fine-tuning tooling
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for full dev setup and guidelines.

@@ -17,7 +17,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from cobol_intel.llm.context_builder import build_program_prompt
 from cobol_intel.service.pipeline import (
-    AnalysisRunResult,
     analyze_path,
     discover_cobol_files,
     to_ast_output,
@@ -51,13 +50,11 @@ def run_benchmark(
 
     output_dir = Path("benchmark_artifacts")
 
-    start = time.perf_counter()
     run_result = analyze_path(
         path=samples_dir,
         output_dir=str(output_dir),
         copybook_dirs=[str(d) for d in (copybook_dirs or [])],
     )
-    total_time_ms = (time.perf_counter() - start) * 1000
 
     parse_map = {Path(r.file_path).name: r for r in run_result.parse_results}
     rules_map = {(ro.program_id or Path(ro.file_path).stem): ro for ro in run_result.rules_outputs}
@@ -113,7 +110,10 @@ def format_markdown_table(results: list[BenchmarkResult]) -> str:
     lines = [
         "# Benchmark Results",
         "",
-        "| File | Parse | Time (ms) | Raw Chars | Prompt Chars | Savings % | Rules | Paragraphs | Data Items |",
+        (
+            "| File | Parse | Time (ms) | Raw Chars | Prompt Chars | Savings % "
+            "| Rules | Paragraphs | Data Items |"
+        ),
         "|------|-------|-----------|-----------|-------------|-----------|-------|------------|------------|",
     ]
     for r in results:
@@ -129,8 +129,154 @@ def format_markdown_table(results: list[BenchmarkResult]) -> str:
     total = len(results)
     lines.extend([
         "",
-        f"**Parse success rate**: {success_count}/{total} ({success_count/total*100:.0f}%)" if total else "",
+        (
+            f"**Parse success rate**: {success_count}/{total} "
+            f"({success_count/total*100:.0f}%)"
+        ) if total else "",
     ])
+    return "\n".join(lines)
+
+
+@dataclass
+class PromptComparisonResult:
+    """Result of comparing raw source prompts vs structured pipeline prompts."""
+
+    file_path: str
+    program_id: str
+    strategy: str
+    mode: str
+    prompt_chars: int
+    response_chars: int
+    input_tokens: int
+    output_tokens: int
+    has_traceability: bool
+    has_rules_reference: bool
+    has_structured_sections: bool
+
+
+def run_prompt_comparison(
+    samples_dir: Path,
+    copybook_dirs: list[Path] | None = None,
+    max_programs: int = 3,
+) -> list[PromptComparisonResult]:
+    """Compare raw source prompts vs structured pipeline prompts.
+
+    This is a prompt-structure benchmark, not a live model-quality benchmark.
+    It measures how much context and structure the pipeline adds before any
+    backend inference happens.
+    """
+    from cobol_intel.analysis.rules_extractor import extract_rules
+    from cobol_intel.contracts.explanation_output import ExplanationMode
+    from cobol_intel.llm.context_builder import build_program_prompt, build_system_prompt
+    from cobol_intel.parsers.antlr_parser import ANTLR4Parser
+    from cobol_intel.parsers.preprocessor import COBOLPreprocessor
+
+    results: list[PromptComparisonResult] = []
+
+    cobol_files = discover_cobol_files(samples_dir)[:max_programs]
+    parser = ANTLR4Parser()
+    preprocessor = COBOLPreprocessor(
+        copybook_dirs=[str(d) for d in (copybook_dirs or [])],
+    )
+
+    for cobol_file in cobol_files:
+        source = cobol_file.read_text(encoding="utf-8")
+        preprocessed = preprocessor.preprocess(source, file_path=str(cobol_file))
+        parsed = parser.parse(preprocessed.text, file_path=str(cobol_file))
+
+        if not parsed.success:
+            continue
+
+        ast_out = to_ast_output(parsed, file_path=str(cobol_file))
+        rules = extract_rules(parsed, file_path=str(cobol_file))
+        program_id = ast_out.program_id or cobol_file.stem
+
+        for mode in ExplanationMode:
+            # Raw approach: just send source code
+            raw_prompt = source
+            raw_chars = len(raw_prompt)
+
+            # Pipeline approach: structured artifacts
+            pipeline_prompt = build_program_prompt(ast_out, rules=rules)
+            system_prompt = build_system_prompt(mode)
+            pipeline_chars = len(pipeline_prompt) + len(system_prompt)
+
+            # Measure quality indicators
+            results.append(PromptComparisonResult(
+                file_path=str(cobol_file),
+                program_id=program_id,
+                strategy="raw_source",
+                mode=mode.value,
+                prompt_chars=raw_chars,
+                response_chars=0,
+                input_tokens=raw_chars // 4,
+                output_tokens=0,
+                has_traceability=False,
+                has_rules_reference=False,
+                has_structured_sections=False,
+            ))
+
+            results.append(PromptComparisonResult(
+                file_path=str(cobol_file),
+                program_id=program_id,
+                strategy="structured_pipeline",
+                mode=mode.value,
+                prompt_chars=pipeline_chars,
+                response_chars=0,
+                input_tokens=pipeline_chars // 4,
+                output_tokens=0,
+                has_traceability="## Paragraphs" in pipeline_prompt,
+                has_rules_reference="## Extracted Business Rules" in pipeline_prompt,
+                has_structured_sections=(
+                    "## Data Items" in pipeline_prompt
+                    and "## Paragraphs" in pipeline_prompt
+                ),
+            ))
+
+    return results
+
+
+# Backward-compatible alias for earlier internal drafts.
+run_backend_comparison = run_prompt_comparison
+
+
+def format_comparison_table(results: list[PromptComparisonResult]) -> str:
+    """Render prompt strategy comparison as a Markdown table."""
+    lines = [
+        "# Prompt Strategy Comparison",
+        "",
+        "| Program | Strategy | Mode | Prompt Chars | ~Tokens | Traceable | Rules | Structured |",
+        "|---------|---------|------|-------------|---------|-----------|-------|------------|",
+    ]
+    for r in results:
+        lines.append(
+            f"| {r.program_id} | {r.strategy} | {r.mode} | "
+            f"{r.prompt_chars:,} | ~{r.input_tokens:,} | "
+            f"{'yes' if r.has_traceability else 'no'} | "
+            f"{'yes' if r.has_rules_reference else 'no'} | "
+            f"{'yes' if r.has_structured_sections else 'no'} |"
+        )
+
+    # Summary
+    raw = [r for r in results if r.strategy == "raw_source"]
+    pipeline = [r for r in results if r.strategy == "structured_pipeline"]
+    if raw and pipeline:
+        avg_raw = sum(r.prompt_chars for r in raw) / len(raw)
+        avg_pipe = sum(r.prompt_chars for r in pipeline) / len(pipeline)
+        lines.extend([
+            "",
+            f"**Avg raw prompt**: {avg_raw:,.0f} chars",
+            f"**Avg pipeline prompt**: {avg_pipe:,.0f} chars",
+            (
+                f"**Pipeline structured**: "
+                f"{sum(1 for r in pipeline if r.has_structured_sections)}/{len(pipeline)}"
+            ),
+            (
+                f"**Pipeline with rules**: "
+                f"{sum(1 for r in pipeline if r.has_rules_reference)}/{len(pipeline)}"
+            ),
+        ])
+
     return "\n".join(lines)
 
 
@@ -141,6 +287,14 @@ def main() -> None:
     parser.add_argument("--samples-dir", default="samples", help="COBOL samples directory")
     parser.add_argument("--copybook-dir", default="copybooks", help="Copybook directory")
     parser.add_argument("--output", default="benchmark_results.json", help="Output JSON path")
+    parser.add_argument(
+        "--compare", action="store_true",
+        help="Run raw vs structured-pipeline prompt comparison",
+    )
+    parser.add_argument(
+        "--max-programs", type=int, default=5,
+        help="Max programs for prompt comparison",
+    )
     args = parser.parse_args()
 
     samples = Path(args.samples_dir)
@@ -165,6 +319,35 @@ def main() -> None:
     if results:
         avg_savings = sum(r.token_savings_pct for r in results if r.parse_success) / max(success, 1)
         print(f"Avg token savings: {avg_savings:.1f}%")
+
+    # Prompt strategy comparison
+    if args.compare:
+        print(
+            f"\nRunning prompt strategy comparison "
+            f"(max {args.max_programs} programs)..."
+        )
+        comparison = run_prompt_comparison(
+            samples, copybook_dirs, max_programs=args.max_programs,
+        )
+        comp_path = output_path.with_stem(output_path.stem + "_comparison")
+        comp_path.write_text(
+            json.dumps([asdict(r) for r in comparison], indent=2),
+            encoding="utf-8",
+        )
+        comp_md = comp_path.with_suffix(".md")
+        comp_md.write_text(format_comparison_table(comparison), encoding="utf-8")
+        print(f"Comparison results: {comp_md}")
+
+        raw = [r for r in comparison if r.strategy == "raw_source"]
+        pipeline = [
+            r for r in comparison if r.strategy == "structured_pipeline"
+        ]
+        print(
+            f"  Raw prompts: {len(raw)}, "
+            f"Structured pipeline prompts: {len(pipeline)}"
+        )
+        structured = sum(1 for r in pipeline if r.has_structured_sections)
+        print(f"  Pipeline structured: {structured}/{len(pipeline)}")
 
 
 if __name__ == "__main__":
