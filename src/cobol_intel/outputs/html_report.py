@@ -6,41 +6,63 @@ from cobol_intel.contracts.graph_output import CallGraphOutput
 from cobol_intel.contracts.manifest import Manifest
 from cobol_intel.outputs.doc_generator import ProgramDocumentation
 
-_CSS = """
-:root { --bg: #f8f9fa; --card: #fff; --border: #dee2e6; --primary: #0d6efd; --text: #212529; --muted: #6c757d; }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
-.container { max-width: 1200px; margin: 0 auto; padding: 24px; display: flex; gap: 24px; }
-nav.sidebar { position: sticky; top: 24px; width: 260px; flex-shrink: 0; height: fit-content; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
-nav.sidebar h3 { font-size: 14px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.5px; }
-nav.sidebar ul { list-style: none; }
-nav.sidebar li { margin-bottom: 4px; }
-nav.sidebar a { color: var(--primary); text-decoration: none; font-size: 14px; }
-nav.sidebar a:hover { text-decoration: underline; }
-nav.sidebar input { width: 100%; padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 14px; margin-bottom: 12px; }
-main { flex: 1; min-width: 0; }
-.card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin-bottom: 24px; }
-h1 { font-size: 28px; margin-bottom: 16px; }
-h2 { font-size: 22px; margin-bottom: 12px; border-bottom: 2px solid var(--border); padding-bottom: 6px; }
-h3 { font-size: 18px; margin: 16px 0 8px; }
-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 12px 0; }
-th { background: var(--bg); text-align: left; padding: 8px 12px; border: 1px solid var(--border); font-weight: 600; }
-td { padding: 8px 12px; border: 1px solid var(--border); }
-tr:hover { background: #f0f6ff; }
-.badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-.badge-ok { background: #d1e7dd; color: #0f5132; }
-.badge-warn { background: #fff3cd; color: #664d03; }
-.badge-err { background: #f8d7da; color: #842029; }
-.meta { color: var(--muted); font-size: 14px; }
-ul.dep-list { list-style: none; padding-left: 0; }
-ul.dep-list li::before { content: "→ "; color: var(--primary); font-weight: bold; }
-details { margin: 8px 0; }
-details summary { cursor: pointer; font-weight: 600; padding: 8px 0; }
-details[open] summary { margin-bottom: 8px; }
-.mermaid { background: var(--card); padding: 16px; border-radius: 8px; text-align: center; }
-code { background: #e9ecef; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
-p { margin: 6px 0; }
-"""
+_CSS = (  # noqa: E501 — embedded CSS, line length not meaningful
+    ":root{--bg:#f8f9fa;--card:#fff;--border:#dee2e6;"
+    "--primary:#0d6efd;--text:#212529;--muted:#6c757d}"
+    "*{box-sizing:border-box;margin:0;padding:0}"
+    "body{font-family:-apple-system,BlinkMacSystemFont,"
+    "'Segoe UI',Roboto,sans-serif;background:var(--bg);"
+    "color:var(--text);line-height:1.6}"
+    ".container{max-width:1200px;margin:0 auto;"
+    "padding:24px;display:flex;gap:24px}"
+    "nav.sidebar{position:sticky;top:24px;width:260px;"
+    "flex-shrink:0;height:fit-content;"
+    "background:var(--card);border:1px solid var(--border);"
+    "border-radius:8px;padding:16px}"
+    "nav.sidebar h3{font-size:14px;text-transform:uppercase;"
+    "color:var(--muted);margin-bottom:8px;letter-spacing:.5px}"
+    "nav.sidebar ul{list-style:none}"
+    "nav.sidebar li{margin-bottom:4px}"
+    "nav.sidebar a{color:var(--primary);"
+    "text-decoration:none;font-size:14px}"
+    "nav.sidebar a:hover{text-decoration:underline}"
+    "nav.sidebar input{width:100%;padding:6px 10px;"
+    "border:1px solid var(--border);border-radius:4px;"
+    "font-size:14px;margin-bottom:12px}"
+    "main{flex:1;min-width:0}"
+    ".card{background:var(--card);"
+    "border:1px solid var(--border);border-radius:8px;"
+    "padding:24px;margin-bottom:24px}"
+    "h1{font-size:28px;margin-bottom:16px}"
+    "h2{font-size:22px;margin-bottom:12px;"
+    "border-bottom:2px solid var(--border);padding-bottom:6px}"
+    "h3{font-size:18px;margin:16px 0 8px}"
+    "table{width:100%;border-collapse:collapse;"
+    "font-size:14px;margin:12px 0}"
+    "th{background:var(--bg);text-align:left;"
+    "padding:8px 12px;border:1px solid var(--border);"
+    "font-weight:600}"
+    "td{padding:8px 12px;border:1px solid var(--border)}"
+    "tr:hover{background:#f0f6ff}"
+    ".badge{display:inline-block;padding:2px 8px;"
+    "border-radius:12px;font-size:12px;font-weight:600}"
+    ".badge-ok{background:#d1e7dd;color:#0f5132}"
+    ".badge-warn{background:#fff3cd;color:#664d03}"
+    ".badge-err{background:#f8d7da;color:#842029}"
+    ".meta{color:var(--muted);font-size:14px}"
+    "ul.dep-list{list-style:none;padding-left:0}"
+    "ul.dep-list li::before{content:'→ ';"
+    "color:var(--primary);font-weight:bold}"
+    "details{margin:8px 0}"
+    "details summary{cursor:pointer;"
+    "font-weight:600;padding:8px 0}"
+    "details[open] summary{margin-bottom:8px}"
+    ".mermaid{background:var(--card);padding:16px;"
+    "border-radius:8px;text-align:center}"
+    "code{background:#e9ecef;padding:2px 6px;"
+    "border-radius:4px;font-size:13px}"
+    "p{margin:6px 0}"
+)
 
 _JS = """
 function filterPrograms() {
@@ -99,6 +121,13 @@ def render_html_report(
         _render_program_section(doc) for doc in program_docs
     )
 
+    inventory_rows = "".join(
+        f'<tr><td><a href="#prog-{_slug(d.program_id)}">'
+        f'{_esc(d.program_id)}</a></td>'
+        f'<td><code>{_esc(d.file_path)}</code></td></tr>'
+        for d in program_docs
+    )
+
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -127,7 +156,7 @@ def render_html_report(
             <table>
                 <thead><tr><th>Program</th><th>File</th></tr></thead>
                 <tbody>
-                {"".join(f'<tr><td><a href="#prog-{_slug(d.program_id)}">{_esc(d.program_id)}</a></td><td><code>{_esc(d.file_path)}</code></td></tr>' for d in program_docs)}
+                {inventory_rows}
                 </tbody>
             </table>
         </div>
@@ -202,18 +231,17 @@ def _render_program_section(doc: ProgramDocumentation) -> str:
 
 def _render_md_block(heading: str, lines: list[str]) -> str:
     content = "\n".join(lines)
-    has_table = any("<td>" in l or "<th>" in l for l in lines)
-    has_list = any("<li>" in l for l in lines)
+    has_table = any("<td>" in ln or "<th>" in ln for ln in lines)
+    has_list = any("<li>" in ln for ln in lines)
 
     if has_table:
-        # Wrap table rows in a table
-        rows = [l for l in lines if "<td>" in l or "<th>" in l]
-        non_rows = [l for l in lines if "<td>" not in l and "<th>" not in l]
+        rows = [ln for ln in lines if "<td>" in ln or "<th>" in ln]
+        non_rows = [ln for ln in lines if "<td>" not in ln and "<th>" not in ln]
         table_html = "<table>\n" + "\n".join(rows) + "\n</table>"
         content = "\n".join(non_rows) + "\n" + table_html
     if has_list:
-        list_items = [l for l in lines if "<li>" in l]
-        non_list = [l for l in lines if "<li>" not in l]
+        list_items = [ln for ln in lines if "<li>" in ln]
+        non_list = [ln for ln in lines if "<li>" not in ln]
         list_html = "<ul class='dep-list'>\n" + "\n".join(list_items) + "\n</ul>"
         content = "\n".join(non_list) + "\n" + list_html
 
@@ -242,7 +270,12 @@ def _inline_code(text: str) -> str:
 
 
 def _status_badge(status: str) -> str:
-    cls = "badge-ok" if status == "completed" else "badge-warn" if status == "partial" else "badge-err"
+    if status == "completed":
+        cls = "badge-ok"
+    elif status == "partial":
+        cls = "badge-warn"
+    else:
+        cls = "badge-err"
     return f'<span class="badge {cls}">{_esc(status)}</span>'
 
 
@@ -251,4 +284,7 @@ def _slug(text: str) -> str:
 
 
 def _esc(text: str) -> str:
-    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+    return (
+        text.replace("&", "&amp;").replace("<", "&lt;")
+        .replace(">", "&gt;").replace('"', "&quot;")
+    )

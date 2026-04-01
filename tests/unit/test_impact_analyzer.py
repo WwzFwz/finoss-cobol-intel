@@ -1,11 +1,11 @@
 """Unit tests for the change impact analyzer."""
 
+from cobol_intel.analysis.impact_analyzer import analyze_impact
 from cobol_intel.contracts.ast_output import ASTOutput, DataItemOut, ParagraphOut, StatementOut
 from cobol_intel.contracts.graph_output import CallEdge, CallGraphOutput
 from cobol_intel.contracts.impact_output import ImpactType
 from cobol_intel.contracts.rules_output import BusinessRule, RulesOutput
 from cobol_intel.contracts.source_ref import SourceRef
-from cobol_intel.analysis.impact_analyzer import analyze_impact
 
 
 def _make_graph() -> CallGraphOutput:

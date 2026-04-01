@@ -1,195 +1,175 @@
 # cobol-intel
 
-`cobol-intel` is an open-source static analysis and documentation engine for
-legacy COBOL codebases. It is designed for banking, fintech, and regulated
-modernization workflows where teams need traceable artifacts before they trust
-an LLM with explanation or migration support.
+[![CI](https://github.com/WwzFwz/cobol-intel/actions/workflows/ci.yml/badge.svg)](https://github.com/WwzFwz/cobol-intel/actions/workflows/ci.yml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+Open-source static analysis and LLM explanation platform for legacy COBOL
+codebases. Built for banking, fintech, and regulated modernization workflows.
 
 ## Why This Exists
 
-Legacy COBOL systems often fail the same way:
+Legacy COBOL systems fail the same way: key maintainers retire, documentation
+goes stale, impact analysis is manual, and regulators still need clear
+explanations. `cobol-intel` fixes that with a structured pipeline:
 
-- key maintainers retire
-- documentation is stale or missing
-- impact analysis is manual and risky
-- regulators or auditors still expect clear explanations
-
-`cobol-intel` addresses that by building a structured pipeline first:
-
-```text
-COBOL source
-   -> preprocessing and copybook resolution
-   -> parser and AST
-   -> call graph and business rules
-   -> versioned JSON and Markdown artifacts
-   -> optional LLM explanation layer
+```
+COBOL source → parser & AST → call graph & business rules → LLM explanation
+                                                           → impact analysis
+                                                           → documentation
 ```
 
-The core idea is simple: the LLM should consume clean, traceable artifacts, not
-raw COBOL.
+The LLM consumes clean, traceable artifacts — not raw COBOL.
 
-## Current Status
-
-- Phase 0 complete: parser evaluation, contracts, and project foundations
-- Phase 1 complete: static analysis core, artifact writing, corpus coverage, and regression baselines
-- Phase 2 complete: LLM backend abstraction, explain workflows, and multi-backend support are available
-- Phase 3 foundations in progress: governance, policy enforcement, and safer enterprise integration are landing
-
-See [docs/PROGRESS.md](docs/PROGRESS.md) for the implementation timeline.
-
-## What It Supports Today
-
-The current committed corpus covers a practical modernization subset:
-
-- fixed-format and free-format COBOL
-- `COPY`, circular copy detection, and `COPY ... REPLACING`
-- `WORKING-STORAGE`, `FILE`, and `LINKAGE` sections
-- `PROCEDURE DIVISION USING`
-- `PIC`, `COMP-3`, `REDEFINES`, `OCCURS`, and level-88 conditions
-- `IF`, `EVALUATE`, `PERFORM`, `CALL`, `STRING`, `UNSTRING`, `INSPECT`
-- file I/O statements: `OPEN`, `READ`, `WRITE`, `REWRITE`, `CLOSE`
-- `EXEC SQL` subset for static-analysis context extraction
-
-Known gaps still remain for richer enterprise dialects such as `EXEC CICS`,
-`PERFORM THRU`, `SEARCH`, `SEARCH ALL`, and broader vendor-specific SQL/COBOL
-syntax. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the detailed gap list.
-
-## Installation
+## Quickstart
 
 ```bash
-pip install -e ".[dev]"
+pip install cobol-intel
+
+# Analyze a COBOL directory
+cobol-intel analyze samples/ --copybook-dir copybooks
+
+# Explain with an LLM backend
+cobol-intel explain samples/complex/payment.cbl --model claude --mode business
+
+# Generate documentation
+cobol-intel docs artifacts/samples/run_xxx --format html
+
+# Analyze change impact
+cobol-intel impact artifacts/samples/run_xxx --changed-program PAYMENT --changed-field WS-BALANCE
 ```
 
-Requirements:
+Output:
 
-- Python 3.11+
-- Java only if you want to regenerate the ANTLR parser files
-
-## CLI Usage
-
-The current CLI is intentionally small and focused on artifact generation.
-
-### Inspect Available Commands
-
-```bash
-cobol-intel --help
-cobol-intel analyze --help
-cobol-intel graph --help
 ```
-
-### Analyze A Sample Directory
-
-```bash
-cobol-intel analyze samples --copybook-dir copybooks
-```
-
-Typical result:
-
-```text
-[cobol-intel] analyze: samples
-Run ID: run_20260331_001
+[cobol-intel] analyze: samples/
+Run ID: run_20260401_001
 Status: completed
-Artifacts: artifacts/samples/run_20260331_001
+Artifacts: artifacts/samples/run_20260401_001
 ```
 
-### Analyze A Single Program
+## Features
+
+### Static Analysis
+- ANTLR4-based parser (fixed + free format COBOL)
+- COPYBOOK resolution with circular dependency detection
+- Call graph builder and business rules extractor
+- Data item hierarchy with PIC, COMP-3, REDEFINES, OCCURS, level-88
+
+### LLM Explanation
+- Multi-backend: Claude, OpenAI, Ollama
+- Three modes: `technical`, `business`, `audit`
+- Governance: audit logging, sensitivity classification, prompt redaction
+- Policy enforcement, token budgets, retry/timeout
+- Parallel processing with bounded concurrency
+- File-based cache with composite keys
+
+### Change Impact Analysis
+- "If I change field X, what breaks?"
+- BFS traversal on reverse call graph
+- Field reference scanning across ASTs and business rules
+- Configurable depth limit
+
+### Output & Documentation
+- Versioned JSON artifact contracts (Pydantic v2)
+- Markdown + HTML report generation
+- Self-contained HTML with sidebar nav, search, and Mermaid graphs
+- Structured error codes for operational monitoring
+
+### API & Distribution
+- Versioned REST API (`/api/v1/`) with OpenAPI docs and typed error responses
+- Docker image + docker-compose with optional Ollama sidecar
+- Cross-platform CI (Linux + Windows, Python 3.11 + 3.12)
+
+## CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `analyze` | Parse COBOL files, build AST, call graph, business rules |
+| `explain` | Run analysis + LLM explanation |
+| `graph` | Build dependency and call graph artifacts |
+| `impact` | Analyze change impact from a completed run |
+| `docs` | Generate documentation (Markdown or HTML) |
+
+Key flags:
 
 ```bash
-cobol-intel analyze samples/complex/sqlops.cbl --copybook-dir copybooks
+--model claude|openai|ollama    # LLM backend
+--mode technical|business|audit # Explanation style
+--parallel                      # Enable parallel LLM processing
+--max-workers N                 # Override concurrency limit
+--cache / --no-cache            # Explanation cache toggle
+--strict-policy                 # Hard block policy violations
+--max-tokens-per-run N          # Token budget cap
+--format markdown|html          # Documentation format
 ```
 
-### Write Artifacts To A Custom Directory
+## API Usage
 
 ```bash
-cobol-intel analyze samples --copybook-dir copybooks --output build/artifacts
+pip install cobol-intel[api]
+cobol-intel-api  # starts on port 8000
+
+curl http://localhost:8000/api/v1/health
+curl http://localhost:8000/api/v1/runs?output_dir=artifacts
+curl http://localhost:8000/api/v1/version
 ```
 
-### Generate Graph Artifacts Only
-
-```bash
-cobol-intel graph samples --copybook-dir copybooks
-```
-
-### Explain Command
-
-```bash
-cobol-intel explain samples/complex/payment.cbl --model claude --mode technical
-cobol-intel explain samples/complex/payment.cbl --model openai --mode business
-cobol-intel explain samples/complex/payment.cbl --model ollama --mode audit
-```
-
-Supported explanation backends:
-
-- `claude`
-- `openai`
-- `ollama`
-
-The `explain` command runs the static-analysis pipeline first, then generates
-traceable summaries and paragraph explanations from the selected backend.
-
-Additional safety controls:
-
-- `--strict-policy` to hard block regulated-policy violations
-- `--max-tokens-per-run` to cap LLM spend per explain run
-- `--policy-config` to load deployment-specific model policy from JSON
-
-## Enterprise Readiness Foundations
-
-The repo now includes the first governance building blocks needed for regulated
-environments:
-
-- `logs/audit_events.jsonl` for analysis and explain runs
-- manifest-level `governance` summary with sensitivity and token usage
-- configurable approved model registry and preset helpers for `claude`, `openai`, and `ollama`
-- strict policy enforcement and token-budget controls at explain time
-- backend retry/timeout support plus cloud redaction helpers for safer LLM integration
-
-See [docs/FINTECH_READINESS.md](docs/FINTECH_READINESS.md) for the current
-readiness checklist and remaining gaps.
+See [docs/API_GUIDE.md](docs/API_GUIDE.md) for full endpoint reference.
 
 ## Output Artifacts
 
-Each analysis run writes a stable artifact tree that can be consumed later by a
-GUI, API, or downstream automation:
+Each run produces a stable artifact tree:
 
-```text
-artifacts/<project_slug>/<run_id>/
-  manifest.json
-  ast/
-  graphs/
-  rules/
-  docs/
-  logs/
+```
+artifacts/<project>/<run_id>/
+  manifest.json          # Run metadata, governance, errors
+  ast/                   # Per-program AST JSON
+  graphs/                # Call graph JSON + Mermaid
+  rules/                 # Business rules JSON + Markdown
+  docs/                  # Explanations, documentation
+  logs/                  # Audit event log
 ```
 
-For a concrete example, see [docs/ARTIFACT_EXAMPLE.md](docs/ARTIFACT_EXAMPLE.md).
+See [docs/OUTPUT_GALLERY.md](docs/OUTPUT_GALLERY.md) for sample artifacts.
 
-## Naming And Positioning
+## COBOL Subset Coverage
 
-To keep the project publish-ready and consistent:
+- Fixed-format and free-format COBOL
+- `COPY`, circular copy detection, `COPY ... REPLACING`
+- `WORKING-STORAGE`, `FILE`, `LINKAGE` sections
+- `PROCEDURE DIVISION USING`
+- `PIC`, `COMP-3`, `REDEFINES`, `OCCURS`, level-88 conditions
+- `IF`, `EVALUATE`, `PERFORM`, `CALL`, `STRING`, `UNSTRING`, `INSPECT`
+- File I/O: `OPEN`, `READ`, `WRITE`, `REWRITE`, `CLOSE`
+- `EXEC SQL` subset for static-analysis context
 
-- repository name: `cobol-intel`
-- CLI command: `cobol-intel`
-- Python package: `cobol_intel`
+## Development
 
-Long term, this project may become the first module in a broader finance OSS
-suite. That future positioning is intentional, but the current public identity
-remains `cobol-intel`. In other words, the suite idea is optional; this repo is
-already meant to stand on its own.
+```bash
+git clone https://github.com/WwzFwz/cobol-intel.git
+cd cobol-intel
+pip install -e ".[dev]"
 
-More detail is in [docs/SUITE_VISION.md](docs/SUITE_VISION.md).
+make lint    # ruff + tach
+make test    # pytest
+make bench   # benchmark suite
+make build   # build wheel
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for full dev setup and guidelines.
 
 ## Documentation
 
-- [Project Plan](docs/PLAN.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Architecture Decisions](docs/DECISIONS.md)
+- [API Guide](docs/API_GUIDE.md)
+- [Output Gallery](docs/OUTPUT_GALLERY.md)
 - [Fintech Readiness](docs/FINTECH_READINESS.md)
 - [Parser Evaluation](docs/PARSER_EVALUATION.md)
-- [Artifact Example](docs/ARTIFACT_EXAMPLE.md)
-- [Research](docs/RESEARCH.md)
+- [Project Plan](docs/PLAN.md)
 - [Progress](docs/PROGRESS.md)
-- [Suite Vision](docs/SUITE_VISION.md)
+- [Changelog](CHANGELOG.md)
 
 ## License
 

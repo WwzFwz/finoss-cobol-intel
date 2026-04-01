@@ -38,6 +38,7 @@ def test_version_endpoint():
     response = client.get("/api/v1/version")
     assert response.status_code == 200
     assert "version" in response.json()
+    assert response.json()["api_version"] == "v1"
 
 
 def test_analyze_run_lifecycle():
@@ -50,6 +51,8 @@ def test_analyze_run_lifecycle():
     data = response.json()
     run_id = data["run_id"]
     assert data["status"] in ("completed", "partially_completed")
+    assert "program_count" in data
+    assert "error_count" in data
 
     # List runs
     response = client.get("/api/v1/runs", params={"output_dir": str(RUNTIME_DIR)})
@@ -107,11 +110,25 @@ def test_analyze_returns_400_for_bad_path():
         "output_dir": str(RUNTIME_DIR),
     })
     assert response.status_code == 400
+    assert response.json()["error_code"] == "E6001"
+    assert response.json()["message"] == "Invalid analysis request"
 
 
 def test_get_run_returns_404_for_unknown_id():
     response = client.get("/api/v1/runs/run_nonexistent", params={"output_dir": str(RUNTIME_DIR)})
     assert response.status_code == 404
+    assert response.json()["error_code"] == "E5001"
+
+
+def test_unknown_backend_returns_structured_error():
+    response = client.post("/api/v1/runs/explain", json={
+        "path": str(SAMPLES_DIR / "complex" / "payment.cbl"),
+        "output_dir": str(RUNTIME_DIR),
+        "backend": "unknown",
+    })
+    assert response.status_code == 400
+    assert response.json()["error_code"] == "E6001"
+    assert response.json()["message"] == "Unknown backend"
 
 
 def test_openapi_docs_available():

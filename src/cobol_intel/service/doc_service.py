@@ -16,9 +16,10 @@ from cobol_intel.outputs.doc_generator import (
     generate_program_doc,
     generate_project_report,
 )
+from cobol_intel.outputs.html_report import render_html_report
 
 
-def generate_docs(run_dir: Path) -> list[Path]:
+def generate_docs(run_dir: Path, fmt: str = "markdown") -> list[Path]:
     """Read artifacts from a completed run and generate documentation.
 
     Returns list of generated doc file paths.
@@ -83,6 +84,13 @@ def generate_docs(run_dir: Path) -> list[Path]:
     report_path = run_dir / "docs" / "project_report.md"
     write_text_artifact(report_path, report)
     generated_paths.append(report_path)
+
+    # Generate HTML report if requested
+    if fmt == "html":
+        html = render_html_report(manifest, program_docs, call_graph)
+        html_path = run_dir / "docs" / "project_report.html"
+        write_text_artifact(html_path, html)
+        generated_paths.append(html_path)
 
     return generated_paths
 

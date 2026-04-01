@@ -77,7 +77,7 @@ integration, apa yang masih berupa fondasi, dan apa yang masih gap.
 
 ### Enterprise Integration
 
-- read-only API yang stabil untuk consumer eksternal
+- API versioned yang stabil dan konsisten untuk consumer eksternal
 - webhook / event forwarding ke SIEM atau internal logging stack
 - persistent project store selain filesystem artifact layout
 
@@ -102,8 +102,8 @@ integration, apa yang masih berupa fondasi, dan apa yang masih gap.
 
 ## Prioritas Implementasi Yang Disarankan
 
-1. Read-only API untuk consume artifacts dan audit logs
+1. Konsolidasikan kontrak API: typed errors, typed manifests, pagination, dan auth boundary yang jelas
 2. Circuit breaker + richer fallback policy per backend
-3. Observability dashboard untuk token, latency, dan failure rate
+3. Observability dashboard untuk token, latency, cache hit rate, dan failure rate
 4. Sensitivity policy yang lebih granular per tenant / per project
 5. Auth/RBAC jika sudah masuk multi-user deployment

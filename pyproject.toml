@@ -4,12 +4,30 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cobol-intel"
-version = "0.1.0"
+version = "0.2.0"
 description = "Open-source platform for understanding, documenting, and analyzing legacy COBOL codebases using static analysis and LLM"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 keywords = ["cobol", "legacy", "fintech", "static-analysis", "llm", "modernization"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Software Development :: Documentation",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/WwzFwz/cobol-intel"
+Documentation = "https://github.com/WwzFwz/cobol-intel/tree/main/docs"
+Repository = "https://github.com/WwzFwz/cobol-intel"
+Issues = "https://github.com/WwzFwz/cobol-intel/issues"
+Changelog = "https://github.com/WwzFwz/cobol-intel/blob/main/CHANGELOG.md"
 
 dependencies = [
     # Parsing

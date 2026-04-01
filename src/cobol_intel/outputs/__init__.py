@@ -9,6 +9,12 @@ Rules:
 - Consumes contracts artifacts, produces files.
 """
 
+from cobol_intel.outputs.doc_generator import (
+    ProgramDocumentation,
+    generate_program_doc,
+    generate_project_report,
+)
+from cobol_intel.outputs.html_report import render_html_report
 from cobol_intel.outputs.writers import (
     ensure_directory,
     render_rules_markdown,
@@ -16,11 +22,6 @@ from cobol_intel.outputs.writers import (
     write_json_artifact,
     write_jsonl_artifact,
     write_text_artifact,
-)
-from cobol_intel.outputs.doc_generator import (
-    ProgramDocumentation,
-    generate_program_doc,
-    generate_project_report,
 )
 
 __all__ = [
@@ -33,4 +34,5 @@ __all__ = [
     "ProgramDocumentation",
     "generate_program_doc",
     "generate_project_report",
+    "render_html_report",
 ]

@@ -75,7 +75,10 @@ def generate_program_doc(
         for rule in rules.rules:
             actions = ", ".join(rule.actions) if rule.actions else "-"
             para = rule.paragraph or "-"
-            lines.append(f"| {rule.rule_id} | {rule.type} | `{rule.condition}` | {para} | {actions} |")
+            lines.append(
+                f"| {rule.rule_id} | {rule.type} "
+                f"| `{rule.condition}` | {para} | {actions} |"
+            )
         lines.append("")
 
     # Call dependencies
@@ -163,6 +166,9 @@ def _flatten_data_items(item: DataItemOut, lines: list[str]) -> None:
     value = str(item.value) if item.value is not None else "-"
     occurs = str(item.occurs) if item.occurs else "-"
     redefines = item.redefines or "-"
-    lines.append(f"| {item.level:02d} | {item.name} | {pic} | {usage} | {value} | {occurs} | {redefines} |")
+    lines.append(
+        f"| {item.level:02d} | {item.name} | {pic} | {usage} "
+        f"| {value} | {occurs} | {redefines} |"
+    )
     for child in item.children:
         _flatten_data_items(child, lines)

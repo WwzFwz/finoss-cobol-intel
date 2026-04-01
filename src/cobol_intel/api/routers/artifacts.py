@@ -5,20 +5,31 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from fastapi.responses import FileResponse, JSONResponse
 
+from cobol_intel.api.errors import api_error
+from cobol_intel.api.models import ErrorResponse
 from cobol_intel.api.security import safe_artifact_path
+from cobol_intel.contracts.manifest import ErrorCode
 
 router = APIRouter(tags=["artifacts"])
 
 
-@router.get("/runs/{run_id}/artifacts/{artifact_path:path}")
+@router.get(
+    "/runs/{run_id}/artifacts/{artifact_path:path}",
+    responses={400: {"model": ErrorResponse}, 404: {"model": ErrorResponse}},
+)
 def get_artifact(run_id: str, artifact_path: str, output_dir: str = "artifacts"):
     """Serve an artifact file from a completed run."""
     run_dir = _find_run_dir(run_id, Path(output_dir))
     if run_dir is None:
-        raise HTTPException(status_code=404, detail=f"Run not found: {run_id}")
+        raise api_error(
+            404,
+            ErrorCode.IO_WRITE,
+            "Run not found",
+            f"Run not found: {run_id}",
+        )
 
     resolved = safe_artifact_path(run_dir, artifact_path)
 
@@ -29,12 +40,20 @@ def get_artifact(run_id: str, artifact_path: str, output_dir: str = "artifacts")
     return FileResponse(path=str(resolved), filename=resolved.name)
 
 
-@router.get("/runs/{run_id}/audit-log")
+@router.get(
+    "/runs/{run_id}/audit-log",
+    responses={404: {"model": ErrorResponse}},
+)
 def get_audit_log(run_id: str, output_dir: str = "artifacts"):
     """Return audit events for a run as a JSON array."""
     run_dir = _find_run_dir(run_id, Path(output_dir))
     if run_dir is None:
-        raise HTTPException(status_code=404, detail=f"Run not found: {run_id}")
+        raise api_error(
+            404,
+            ErrorCode.IO_WRITE,
+            "Run not found",
+            f"Run not found: {run_id}",
+        )
 
     log_path = run_dir / "logs" / "audit_events.jsonl"
     if not log_path.exists():

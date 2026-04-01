@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import HTTPException
+from cobol_intel.api.errors import api_error
+from cobol_intel.contracts.manifest import ErrorCode
 
 
 def safe_artifact_path(run_dir: Path, artifact_path: str) -> Path:
@@ -14,7 +15,17 @@ def safe_artifact_path(run_dir: Path, artifact_path: str) -> Path:
     """
     resolved = (run_dir / artifact_path).resolve()
     if not resolved.is_relative_to(run_dir.resolve()):
-        raise HTTPException(status_code=400, detail="Path traversal detected")
+        raise api_error(
+            400,
+            ErrorCode.CONFIG_INVALID,
+            "Invalid artifact path",
+            "Path traversal detected",
+        )
     if not resolved.exists():
-        raise HTTPException(status_code=404, detail=f"Artifact not found: {artifact_path}")
+        raise api_error(
+            404,
+            ErrorCode.IO_WRITE,
+            "Artifact not found",
+            f"Artifact not found: {artifact_path}",
+        )
     return resolved

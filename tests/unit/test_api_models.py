@@ -7,6 +7,7 @@ from cobol_intel.api.models import (
     HealthResponse,
     RunListResponse,
     RunSummary,
+    VersionResponse,
 )
 
 
@@ -37,6 +38,8 @@ def test_run_list_response():
         status="completed",
         started_at="2026-04-01T00:00:00Z",
         artifacts_dir="artifacts/demo/run_001",
+        program_count=2,
+        error_count=0,
     )
     resp = RunListResponse(runs=[run], total=1)
     assert resp.total == 1
@@ -45,3 +48,8 @@ def test_run_list_response():
 def test_health_response():
     resp = HealthResponse(status="ok", version="0.1.0")
     assert resp.status == "ok"
+
+
+def test_version_response():
+    resp = VersionResponse(version="0.2.0", api_version="v1")
+    assert resp.api_version == "v1"

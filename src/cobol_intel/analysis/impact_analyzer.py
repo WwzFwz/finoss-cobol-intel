@@ -36,13 +36,25 @@ def analyze_impact(
         for caller_id, distance in callers.items():
             if caller_id in changed_programs:
                 continue
-            impact_type = ImpactType.DIRECT_CALLER if distance == 1 else ImpactType.TRANSITIVE_CALLER
+            if distance == 1:
+                impact_type = ImpactType.DIRECT_CALLER
+                reason = f"Calls {changed_prog}"
+            else:
+                impact_type = ImpactType.TRANSITIVE_CALLER
+                reason = (
+                    f"Transitive caller of {changed_prog} "
+                    f"(depth {distance})"
+                )
+            file_path = (
+                asts_by_program[caller_id].file_path
+                if caller_id in asts_by_program else ""
+            )
             entity = impacted.get(caller_id, ImpactedEntity(
                 program_id=caller_id,
-                file_path=asts_by_program[caller_id].file_path if caller_id in asts_by_program else "",
+                file_path=file_path,
                 impact_type=impact_type,
                 distance=distance,
-                reason=f"Calls {changed_prog}" if distance == 1 else f"Transitive caller of {changed_prog} (depth {distance})",
+                reason=reason,
             ))
             if caller_id not in impacted or distance < impacted[caller_id].distance:
                 impacted[caller_id] = entity
@@ -59,7 +71,9 @@ def analyze_impact(
             if paragraphs or rule_ids:
                 existing = impacted.get(prog_id)
                 if existing:
-                    existing.affected_paragraphs = sorted(set(existing.affected_paragraphs) | set(paragraphs))
+                    existing.affected_paragraphs = sorted(
+                        set(existing.affected_paragraphs) | set(paragraphs)
+                    )
                     existing.affected_rules = sorted(set(existing.affected_rules) | set(rule_ids))
                 else:
                     impacted[prog_id] = ImpactedEntity(

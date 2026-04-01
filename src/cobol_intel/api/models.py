@@ -28,6 +28,8 @@ class RunSummary(BaseModel):
     status: str
     started_at: str
     artifacts_dir: str
+    program_count: int = 0
+    error_count: int = 0
 
 
 class RunListResponse(BaseModel):
@@ -44,3 +46,8 @@ class ErrorResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     version: str
+
+
+class VersionResponse(BaseModel):
+    version: str
+    api_version: str

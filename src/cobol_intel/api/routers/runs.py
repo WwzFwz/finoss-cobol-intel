@@ -5,8 +5,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Query
 
+from cobol_intel.api.errors import api_error
 from cobol_intel.api.models import (
     AnalyzeRequest,
     ErrorResponse,
@@ -14,7 +15,7 @@ from cobol_intel.api.models import (
     RunListResponse,
     RunSummary,
 )
-from cobol_intel.contracts.manifest import Manifest
+from cobol_intel.contracts.manifest import ErrorCode, Manifest
 
 router = APIRouter(tags=["runs"])
 
@@ -37,7 +38,7 @@ def create_analysis_run(request: AnalyzeRequest) -> RunSummary:
             copybook_dirs=request.copybook_dirs or [],
         )
     except FileNotFoundError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise api_error(400, ErrorCode.CONFIG_INVALID, "Invalid analysis request", str(exc))
 
     return RunSummary(
         run_id=result.manifest.run_id,
@@ -45,6 +46,8 @@ def create_analysis_run(request: AnalyzeRequest) -> RunSummary:
         status=result.manifest.status.value,
         started_at=result.manifest.started_at.isoformat(),
         artifacts_dir=str(result.run_dir),
+        program_count=len(result.manifest.artifacts.ast),
+        error_count=len(result.manifest.errors),
     )
 
 
@@ -71,7 +74,7 @@ def create_explain_run(request: ExplainRequest) -> RunSummary:
             max_tokens_per_run=request.max_tokens_per_run,
         )
     except FileNotFoundError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise api_error(400, ErrorCode.CONFIG_INVALID, "Invalid explain request", str(exc))
 
     return RunSummary(
         run_id=result.manifest.run_id,
@@ -79,6 +82,8 @@ def create_explain_run(request: ExplainRequest) -> RunSummary:
         status=result.manifest.status.value,
         started_at=result.manifest.started_at.isoformat(),
         artifacts_dir=str(result.run_dir),
+        program_count=len(result.manifest.artifacts.ast),
+        error_count=len(result.manifest.errors),
     )
 
 
@@ -86,7 +91,7 @@ def create_explain_run(request: ExplainRequest) -> RunSummary:
 def list_runs(
     project: str | None = None,
     output_dir: str = "artifacts",
-    limit: int = 50,
+    limit: int = Query(50, ge=1, le=500),
 ) -> RunListResponse:
     """List recent analysis runs by scanning the artifacts directory."""
     artifacts_root = Path(output_dir)
@@ -111,6 +116,8 @@ def list_runs(
                     status=data["status"],
                     started_at=data["started_at"],
                     artifacts_dir=str(run_dir),
+                    program_count=len(data.get("artifacts", {}).get("ast", [])),
+                    error_count=len(data.get("errors", [])),
                 ))
             except (json.JSONDecodeError, KeyError):
                 continue
@@ -122,13 +129,17 @@ def list_runs(
     return RunListResponse(runs=runs, total=len(runs))
 
 
-@router.get("/runs/{run_id}")
-def get_run(run_id: str, output_dir: str = "artifacts") -> dict:
+@router.get(
+    "/runs/{run_id}",
+    response_model=Manifest,
+    responses={404: {"model": ErrorResponse}},
+)
+def get_run(run_id: str, output_dir: str = "artifacts") -> Manifest:
     """Get the full manifest for a specific run."""
     manifest_path = _find_manifest(run_id, Path(output_dir))
     if manifest_path is None:
-        raise HTTPException(status_code=404, detail=f"Run not found: {run_id}")
-    return json.loads(manifest_path.read_text(encoding="utf-8"))
+        raise api_error(404, ErrorCode.IO_WRITE, "Run not found", f"Run not found: {run_id}")
+    return Manifest(**json.loads(manifest_path.read_text(encoding="utf-8")))
 
 
 def _find_manifest(run_id: str, artifacts_root: Path) -> Path | None:
@@ -156,4 +167,9 @@ def _resolve_backend(backend_name: str):
         from cobol_intel.llm.ollama_backend import OllamaBackend
         return OllamaBackend()
     else:
-        raise HTTPException(status_code=400, detail=f"Unknown backend: {backend_name}")
+        raise api_error(
+            400,
+            ErrorCode.CONFIG_INVALID,
+            "Unknown backend",
+            f"Unknown backend: {backend_name}",
+        )

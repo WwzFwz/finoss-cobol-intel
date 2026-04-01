@@ -4,8 +4,8 @@ import shutil
 from pathlib import Path
 
 import pytest
-from fastapi import HTTPException
 
+from cobol_intel.api.errors import ApiError
 from cobol_intel.api.security import safe_artifact_path
 
 RUNTIME_DIR = Path(__file__).resolve().parents[2] / "tests_runtime_api_security"
@@ -37,23 +37,23 @@ def test_safe_path_allows_valid_artifact():
 
 def test_safe_path_blocks_traversal():
     run_dir = _fresh_run_dir()
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises(ApiError) as exc_info:
         safe_artifact_path(run_dir, "../../etc/passwd")
     assert exc_info.value.status_code == 400
-    assert "traversal" in exc_info.value.detail.lower()
+    assert "traversal" in (exc_info.value.detail or "").lower()
 
 
 def test_safe_path_blocks_dotdot_in_middle():
     run_dir = _fresh_run_dir()
     sub = run_dir / "ast"
     sub.mkdir()
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises(ApiError) as exc_info:
         safe_artifact_path(run_dir, "ast/../../etc/passwd")
     assert exc_info.value.status_code == 400
 
 
 def test_safe_path_returns_404_for_missing_file():
     run_dir = _fresh_run_dir()
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises(ApiError) as exc_info:
         safe_artifact_path(run_dir, "nonexistent.json")
     assert exc_info.value.status_code == 404
