@@ -49,3 +49,5 @@ class ExplanationOutput(BaseModel):
     paragraph_limit: int | None = None
     paragraphs_skipped: list[str] = Field(default_factory=list)
     tokens_used: int = 0
+    retry_count: int = 0
+    timeout_count: int = 0

@@ -11,6 +11,8 @@ _DEFAULT_MAX_OUTPUT_TOKENS = 4096
 _DEFAULT_TIMEOUT_SECONDS = 30.0
 _DEFAULT_MAX_RETRIES = 2
 _DEFAULT_RETRY_DELAY_SECONDS = 0.5
+_DEFAULT_BACKOFF_MULTIPLIER = 2.0
+_DEFAULT_JITTER_RATIO = 0.1
 
 
 class OpenAIBackend(LLMBackend):
@@ -24,6 +26,8 @@ class OpenAIBackend(LLMBackend):
         timeout_seconds: float | None = None,
         max_retries: int | None = None,
         retry_delay_seconds: float = _DEFAULT_RETRY_DELAY_SECONDS,
+        backoff_multiplier: float = _DEFAULT_BACKOFF_MULTIPLIER,
+        jitter_ratio: float = _DEFAULT_JITTER_RATIO,
     ) -> None:
         self._api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
         self._model = model
@@ -35,6 +39,8 @@ class OpenAIBackend(LLMBackend):
             os.environ.get("COBOL_INTEL_OPENAI_MAX_RETRIES", _DEFAULT_MAX_RETRIES)
         )
         self._retry_delay_seconds = retry_delay_seconds
+        self._backoff_multiplier = backoff_multiplier
+        self._jitter_ratio = jitter_ratio
         self._client = None
 
     def _get_client(self):
@@ -56,6 +62,18 @@ class OpenAIBackend(LLMBackend):
     def model_id(self) -> str:
         return self._model
 
+    def clone(self) -> OpenAIBackend:
+        return OpenAIBackend(
+            api_key=self._api_key,
+            model=self._model,
+            max_output_tokens=self._max_output_tokens,
+            timeout_seconds=self._timeout_seconds,
+            max_retries=self._max_retries,
+            retry_delay_seconds=self._retry_delay_seconds,
+            backoff_multiplier=self._backoff_multiplier,
+            jitter_ratio=self._jitter_ratio,
+        )
+
     def generate(self, prompt: str, system: str = "") -> LLMResponse:
         """Generate a completion using the OpenAI Responses API."""
         if not self._api_key:
@@ -73,10 +91,26 @@ class OpenAIBackend(LLMBackend):
         if system:
             kwargs["instructions"] = system
         kwargs["timeout"] = self._timeout_seconds
+        retry_count = 0
+        timeout_count = 0
+
+        def _on_error(event) -> None:
+            nonlocal timeout_count
+            if event.error_kind.value == "timeout":
+                timeout_count += 1
+
+        def _on_retry(event) -> None:
+            nonlocal retry_count
+            retry_count += 1
+
         response = retry_operation(
             lambda: client.responses.create(**kwargs),
             max_retries=self._max_retries,
             retry_delay_seconds=self._retry_delay_seconds,
+            backoff_multiplier=self._backoff_multiplier,
+            jitter_ratio=self._jitter_ratio,
+            on_error=_on_error,
+            on_retry=_on_retry,
         )
         usage = getattr(response, "usage", None)
 
@@ -85,4 +119,6 @@ class OpenAIBackend(LLMBackend):
             model=getattr(response, "model", self._model),
             input_tokens=getattr(usage, "input_tokens", 0) or 0,
             output_tokens=getattr(usage, "output_tokens", 0) or 0,
+            retry_count=retry_count,
+            timeout_count=timeout_count,
         )

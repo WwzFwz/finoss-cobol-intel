@@ -4,12 +4,10 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Any
 
 from pydantic import BaseModel, Field
 
 from cobol_intel.contracts.governance import GovernanceSummary
-
 
 SCHEMA_VERSION = "1.0"
 
@@ -53,6 +51,7 @@ class ArtifactIndex(BaseModel):
     analysis: list[str] = Field(default_factory=list)
     docs: list[str] = Field(default_factory=list)
     logs: list[str] = Field(default_factory=list)
+    metrics: list[str] = Field(default_factory=list)
 
 
 class Manifest(BaseModel):

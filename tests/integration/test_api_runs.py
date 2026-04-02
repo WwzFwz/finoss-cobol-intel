@@ -5,7 +5,6 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-import pytest
 from fastapi.testclient import TestClient
 
 from cobol_intel.api.app import create_app
@@ -51,6 +50,8 @@ def test_analyze_run_lifecycle():
     data = response.json()
     run_id = data["run_id"]
     assert data["status"] in ("completed", "partially_completed")
+    assert "finished_at" in data
+    assert "warning_count" in data
     assert "program_count" in data
     assert "error_count" in data
 
@@ -59,6 +60,8 @@ def test_analyze_run_lifecycle():
     assert response.status_code == 200
     runs = response.json()
     assert runs["total"] >= 1
+    assert runs["limit"] == 50
+    assert runs["offset"] == 0
     assert any(r["run_id"] == run_id for r in runs["runs"])
 
     # Get specific run manifest
@@ -67,6 +70,12 @@ def test_analyze_run_lifecycle():
     manifest = response.json()
     assert manifest["run_id"] == run_id
     assert manifest["schema_version"] == "1.0"
+
+    response = client.get(f"/api/v1/runs/{run_id}/metrics", params={"output_dir": str(RUNTIME_DIR)})
+    assert response.status_code == 200
+    metrics = response.json()
+    assert metrics["run_id"] == run_id
+    assert metrics["phase"] == "analysis"
 
 
 def test_get_artifact_from_run():
@@ -129,6 +138,35 @@ def test_unknown_backend_returns_structured_error():
     assert response.status_code == 400
     assert response.json()["error_code"] == "E6001"
     assert response.json()["message"] == "Unknown backend"
+
+
+def test_list_runs_supports_pagination_and_status_filter():
+    first = client.post("/api/v1/runs/analyze", json={
+        "path": str(SAMPLES_DIR / "complex" / "payment.cbl"),
+        "output_dir": str(RUNTIME_DIR),
+    })
+    second = client.post("/api/v1/runs/analyze", json={
+        "path": str(SAMPLES_DIR / "complex" / "payment.cbl"),
+        "output_dir": str(RUNTIME_DIR),
+    })
+    assert first.status_code == 201
+    assert second.status_code == 201
+
+    response = client.get(
+        "/api/v1/runs",
+        params={
+            "output_dir": str(RUNTIME_DIR),
+            "status": "completed",
+            "limit": 1,
+            "offset": 1,
+        },
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["limit"] == 1
+    assert payload["offset"] == 1
+    assert payload["total"] >= 2
+    assert len(payload["runs"]) <= 1
 
 
 def test_openapi_docs_available():

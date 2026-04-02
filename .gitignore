@@ -23,6 +23,7 @@ tmp*/
 artifacts/
 tests_runtime_artifacts/
 tests_runtime_artifacts_cli/
+.cobol_intel_cache/
 
 # Environment
 .env

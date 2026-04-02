@@ -14,14 +14,15 @@ from pathlib import Path
 
 import pytest
 
-from cobol_intel.parsers.preprocessor import COBOLPreprocessor
+from cobol_intel.parsers.base import ParseResult
 from cobol_intel.parsers.lark_parser import LarkCOBOLParser
+from cobol_intel.parsers.preprocessor import COBOLPreprocessor
 
 SAMPLES_DIR = Path(__file__).parent.parent.parent / "samples"
 COPYBOOKS_DIR = Path(__file__).parent.parent.parent / "copybooks"
 
 
-def parse_sample(rel_path: str, copybook_dirs: list[Path] | None = None) -> "ParseResult":
+def parse_sample(rel_path: str, copybook_dirs: list[Path] | None = None) -> ParseResult:
     """Helper: preprocess + parse a sample file."""
     path = SAMPLES_DIR / rel_path
     source = path.read_text(encoding="utf-8")

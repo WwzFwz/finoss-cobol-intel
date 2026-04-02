@@ -12,7 +12,6 @@ from cobol_intel.contracts.explanation_output import ExplanationMode
 from cobol_intel.contracts.graph_output import CallGraphOutput
 from cobol_intel.contracts.rules_output import RulesOutput
 
-
 _DEFAULT_MAX_CONTEXT_CHARS = 28_000  # ~8k tokens for context
 
 

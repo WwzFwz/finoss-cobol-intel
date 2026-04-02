@@ -24,9 +24,16 @@ def _make_ast() -> ASTOutput:
         data_items=[
             DataItemOut(level=1, name="WS-AMOUNT", pic="9(9)V99", usage="COMP-3"),
             DataItemOut(
-                level=1, name="WS-STATUS", pic="X(2)",
+                level=1,
+                name="WS-STATUS",
+                pic="X(2)",
                 children=[
-                    DataItemOut(level=88, name="STATUS-OK", is_condition=True, condition_values=["00"]),
+                    DataItemOut(
+                        level=88,
+                        name="STATUS-OK",
+                        is_condition=True,
+                        condition_values=["00"],
+                    ),
                 ],
             ),
         ],
@@ -126,7 +133,12 @@ class TestBuildProgramPrompt:
     def test_truncation_preserves_rules_section_before_paragraphs(self):
         ast = _make_ast()
         ast.paragraphs = ast.paragraphs * 40
-        prompt = build_program_prompt(ast, rules=_make_rules(), call_graph=_make_graph(), max_context_chars=800)
+        prompt = build_program_prompt(
+            ast,
+            rules=_make_rules(),
+            call_graph=_make_graph(),
+            max_context_chars=800,
+        )
         assert "## Extracted Business Rules" in prompt
         assert "## Call Graph Context" in prompt
 

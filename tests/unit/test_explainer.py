@@ -59,7 +59,12 @@ def _make_rules() -> RulesOutput:
     return RulesOutput(
         program_id="PAYMENT",
         rules=[
-            BusinessRule(rule_id="R001", type="IF", condition="STATUS-OK", paragraph="MAIN-PROGRAM"),
+            BusinessRule(
+                rule_id="R001",
+                type="IF",
+                condition="STATUS-OK",
+                paragraph="MAIN-PROGRAM",
+            ),
         ],
     )
 

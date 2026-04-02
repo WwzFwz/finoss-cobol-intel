@@ -15,13 +15,13 @@ from pathlib import Path
 
 import pytest
 
+from cobol_intel.analysis.rules_extractor import extract_rules
 from cobol_intel.contracts.explanation_output import ExplanationMode
 from cobol_intel.llm.backend import LLMBackend, LLMResponse
 from cobol_intel.llm.context_builder import build_program_prompt, build_system_prompt
 from cobol_intel.llm.explainer import explain_program
 from cobol_intel.parsers.antlr_parser import ANTLR4Parser
 from cobol_intel.parsers.preprocessor import COBOLPreprocessor
-from cobol_intel.analysis.rules_extractor import extract_rules
 from cobol_intel.service.pipeline import to_ast_output
 
 SAMPLES_DIR = Path(__file__).parent.parent.parent / "samples"

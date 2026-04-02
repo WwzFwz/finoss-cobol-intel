@@ -61,6 +61,8 @@ def explain_program(
         summary_prompt = prompt_transform(summary_prompt)
     summary_response = backend.generate(summary_prompt, system=system_prompt)
     total_tokens = summary_response.total_tokens
+    total_retries = summary_response.retry_count
+    total_timeouts = summary_response.timeout_count
 
     # Parse sections from response
     program_summary, data_summary, rules_summary = _parse_summary_sections(
@@ -89,6 +91,8 @@ def explain_program(
             para_prompt = prompt_transform(para_prompt)
         para_response = backend.generate(para_prompt, system=system_prompt)
         total_tokens += para_response.total_tokens
+        total_retries += para_response.retry_count
+        total_timeouts += para_response.timeout_count
 
         paragraph_explanations.append(ParagraphExplanation(
             paragraph=para.name,
@@ -115,6 +119,8 @@ def explain_program(
         paragraph_limit=max_paragraph_explanations,
         paragraphs_skipped=skipped_paragraphs,
         tokens_used=total_tokens,
+        retry_count=total_retries,
+        timeout_count=total_timeouts,
     )
 
 
@@ -173,7 +179,11 @@ def _select_paragraphs_for_explanation(
     selected = [paragraph for _, _, paragraph in ranked[:max_paragraph_explanations]]
     selected_names = {paragraph.name for paragraph in selected}
     selected = [paragraph for paragraph in ast.paragraphs if paragraph.name in selected_names]
-    skipped = [paragraph.name for paragraph in ast.paragraphs if paragraph.name not in selected_names]
+    skipped = [
+        paragraph.name
+        for paragraph in ast.paragraphs
+        if paragraph.name not in selected_names
+    ]
     return selected, skipped
 
 

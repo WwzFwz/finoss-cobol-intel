@@ -12,7 +12,6 @@ from cobol_intel.contracts.governance import (
     AuditEvent,
     DataSensitivity,
     GovernanceSummary,
-    TokenUsageSummary,
 )
 from cobol_intel.contracts.manifest import Manifest
 from cobol_intel.llm.policy import PolicyConfig, evaluate_model_policy
@@ -104,6 +103,7 @@ def apply_llm_governance(
     model_id: str,
     sensitivity: DataSensitivity,
     total_tokens: int,
+    request_count: int = 1,
     redaction_applied: bool = False,
     strict_policy_enforced: bool = False,
     max_tokens_per_run: int | None = None,
@@ -121,10 +121,12 @@ def apply_llm_governance(
     manifest.governance.approved_model = model_id
     manifest.governance.deployment_tier = deployment_tier
     manifest.governance.strict_policy_enforced = strict_policy_enforced
-    manifest.governance.redaction_applied = manifest.governance.redaction_applied or redaction_applied
+    manifest.governance.redaction_applied = (
+        manifest.governance.redaction_applied or redaction_applied
+    )
     manifest.governance.max_tokens_per_run = max_tokens_per_run
     manifest.governance.policy_warnings.extend(warnings)
-    manifest.governance.token_usage.requests += 1
+    manifest.governance.token_usage.requests += request_count
     manifest.governance.token_usage.total_tokens += total_tokens
     for warning in warnings:
         if warning not in manifest.warnings:

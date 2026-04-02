@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from cobol_intel.parsers.preprocessor import COBOLPreprocessor
 from cobol_intel.parsers.antlr_parser import ANTLR4Parser
+from cobol_intel.parsers.preprocessor import COBOLPreprocessor
 
 SAMPLES_DIR = Path(__file__).parent.parent.parent / "samples"
 COPYBOOKS_DIR = Path(__file__).parent.parent.parent / "copybooks"

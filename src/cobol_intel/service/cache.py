@@ -18,50 +18,59 @@ class CacheKey:
     """Composite key capturing all dimensions that affect explanation output."""
 
     source_hash: str  # SHA-256 of COBOL source
+    analysis_hash: str  # SHA-256 of serialized analysis artifacts
     parser_version: str  # parser name + grammar version
     policy_config_hash: str  # SHA-256 of serialized PolicyConfig (or "none")
     backend: str  # "claude", "openai", "ollama"
     model: str  # model ID
     mode: str  # "technical", "business", "audit"
     context_version: str  # prompt/context builder revision
+    tool_version: str  # cobol-intel version
 
     def hex_digest(self) -> str:
         """Produce a single hash from all key components."""
         combined = "|".join([
             self.source_hash,
+            self.analysis_hash,
             self.parser_version,
             self.policy_config_hash,
             self.backend,
             self.model,
             self.mode,
             self.context_version,
+            self.tool_version,
         ])
         return hashlib.sha256(combined.encode()).hexdigest()
 
 
 def make_cache_key(
     source_text: str,
+    analysis_payload_json: str,
     parser_version: str,
     policy_config_json: str | None,
     backend: str,
     model: str,
     mode: str,
     context_version: str = _CONTEXT_VERSION,
+    tool_version: str = "unknown",
 ) -> CacheKey:
     """Build a CacheKey from raw inputs."""
     source_hash = hashlib.sha256(source_text.encode()).hexdigest()
+    analysis_hash = hashlib.sha256(analysis_payload_json.encode()).hexdigest()
     policy_hash = (
         hashlib.sha256(policy_config_json.encode()).hexdigest()
         if policy_config_json else "none"
     )
     return CacheKey(
         source_hash=source_hash,
+        analysis_hash=analysis_hash,
         parser_version=parser_version,
         policy_config_hash=policy_hash,
         backend=backend,
         model=model,
         mode=mode,
         context_version=context_version,
+        tool_version=tool_version,
     )
 
 

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import json
 import sys
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -271,7 +271,7 @@ def _paragraph_expected_output(para, rules, program_id):
     relevant = [r for r in rules.rules if r.paragraph == para.name]
     if relevant:
         lines.append("")
-        lines.append(f"Business rules in this paragraph:")
+        lines.append("Business rules in this paragraph:")
         for r in relevant:
             lines.append(f"- {r.rule_id}: `{r.condition}`")
 

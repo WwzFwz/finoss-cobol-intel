@@ -42,6 +42,8 @@ def test_claude_backend_retries_transient_failure():
 
     assert fake.calls == 2
     assert response.text == "Recovered Claude response."
+    assert response.retry_count == 1
+    assert response.timeout_count == 0
 
 
 def test_ollama_backend_retries_transient_failure():
@@ -72,3 +74,5 @@ def test_ollama_backend_retries_transient_failure():
 
     assert fake.calls == 2
     assert response.text == "Recovered Ollama response."
+    assert response.retry_count == 1
+    assert response.timeout_count == 0

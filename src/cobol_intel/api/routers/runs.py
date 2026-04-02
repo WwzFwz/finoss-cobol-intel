@@ -13,9 +13,11 @@ from cobol_intel.api.models import (
     ErrorResponse,
     ExplainRequest,
     RunListResponse,
+    RunMetricsResponse,
     RunSummary,
 )
 from cobol_intel.contracts.manifest import ErrorCode, Manifest
+from cobol_intel.contracts.run_metrics import RunMetrics
 
 router = APIRouter(tags=["runs"])
 
@@ -40,15 +42,7 @@ def create_analysis_run(request: AnalyzeRequest) -> RunSummary:
     except FileNotFoundError as exc:
         raise api_error(400, ErrorCode.CONFIG_INVALID, "Invalid analysis request", str(exc))
 
-    return RunSummary(
-        run_id=result.manifest.run_id,
-        project_name=result.manifest.project_name,
-        status=result.manifest.status.value,
-        started_at=result.manifest.started_at.isoformat(),
-        artifacts_dir=str(result.run_dir),
-        program_count=len(result.manifest.artifacts.ast),
-        error_count=len(result.manifest.errors),
-    )
+    return _to_run_summary(result.manifest, result.run_dir)
 
 
 @router.post(
@@ -72,19 +66,14 @@ def create_explain_run(request: ExplainRequest) -> RunSummary:
             policy_config_path=request.policy_config_path,
             strict_policy=request.strict_policy or None,
             max_tokens_per_run=request.max_tokens_per_run,
+            parallel=request.parallel,
+            max_workers=request.max_workers,
+            use_cache=request.cache,
         )
     except FileNotFoundError as exc:
         raise api_error(400, ErrorCode.CONFIG_INVALID, "Invalid explain request", str(exc))
 
-    return RunSummary(
-        run_id=result.manifest.run_id,
-        project_name=result.manifest.project_name,
-        status=result.manifest.status.value,
-        started_at=result.manifest.started_at.isoformat(),
-        artifacts_dir=str(result.run_dir),
-        program_count=len(result.manifest.artifacts.ast),
-        error_count=len(result.manifest.errors),
-    )
+    return _to_run_summary(result.manifest, result.run_dir)
 
 
 @router.get("/runs", response_model=RunListResponse)
@@ -92,11 +81,13 @@ def list_runs(
     project: str | None = None,
     output_dir: str = "artifacts",
     limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    status: str | None = Query(None),
 ) -> RunListResponse:
     """List recent analysis runs by scanning the artifacts directory."""
     artifacts_root = Path(output_dir)
     if not artifacts_root.exists():
-        return RunListResponse(runs=[], total=0)
+        return RunListResponse(runs=[], total=0, limit=limit, offset=offset)
 
     runs: list[RunSummary] = []
     project_dirs = [artifacts_root / project] if project else sorted(artifacts_root.iterdir())
@@ -109,24 +100,16 @@ def list_runs(
             if not manifest_path.exists():
                 continue
             try:
-                data = json.loads(manifest_path.read_text(encoding="utf-8"))
-                runs.append(RunSummary(
-                    run_id=data["run_id"],
-                    project_name=data["project_name"],
-                    status=data["status"],
-                    started_at=data["started_at"],
-                    artifacts_dir=str(run_dir),
-                    program_count=len(data.get("artifacts", {}).get("ast", [])),
-                    error_count=len(data.get("errors", [])),
-                ))
-            except (json.JSONDecodeError, KeyError):
+                manifest = Manifest(**json.loads(manifest_path.read_text(encoding="utf-8")))
+            except (json.JSONDecodeError, KeyError, ValueError):
                 continue
-            if len(runs) >= limit:
-                break
-        if len(runs) >= limit:
-            break
+            if status is not None and manifest.status.value != status:
+                continue
+            runs.append(_to_run_summary(manifest, run_dir))
 
-    return RunListResponse(runs=runs, total=len(runs))
+    total = len(runs)
+    page = runs[offset: offset + limit]
+    return RunListResponse(runs=page, total=total, limit=limit, offset=offset)
 
 
 @router.get(
@@ -140,6 +123,40 @@ def get_run(run_id: str, output_dir: str = "artifacts") -> Manifest:
     if manifest_path is None:
         raise api_error(404, ErrorCode.IO_WRITE, "Run not found", f"Run not found: {run_id}")
     return Manifest(**json.loads(manifest_path.read_text(encoding="utf-8")))
+
+
+@router.get(
+    "/runs/{run_id}/metrics",
+    response_model=RunMetricsResponse,
+    responses={404: {"model": ErrorResponse}},
+)
+def get_run_metrics(run_id: str, output_dir: str = "artifacts") -> RunMetricsResponse:
+    """Get the stable metrics artifact for a specific run."""
+    manifest_path = _find_manifest(run_id, Path(output_dir))
+    if manifest_path is None:
+        raise api_error(404, ErrorCode.IO_WRITE, "Run not found", f"Run not found: {run_id}")
+
+    manifest = Manifest(**json.loads(manifest_path.read_text(encoding="utf-8")))
+    metrics_rel = next(iter(manifest.artifacts.metrics), None)
+    if metrics_rel is None:
+        raise api_error(
+            404,
+            ErrorCode.IO_WRITE,
+            "Run metrics not found",
+            f"No metrics artifact registered for run: {run_id}",
+        )
+
+    metrics_path = manifest_path.parent / metrics_rel
+    if not metrics_path.exists():
+        raise api_error(
+            404,
+            ErrorCode.IO_WRITE,
+            "Run metrics not found",
+            f"Metrics artifact missing on disk for run: {run_id}",
+        )
+
+    metrics = RunMetrics(**json.loads(metrics_path.read_text(encoding="utf-8")))
+    return RunMetricsResponse(**metrics.model_dump())
 
 
 def _find_manifest(run_id: str, artifacts_root: Path) -> Path | None:
@@ -166,6 +183,9 @@ def _resolve_backend(backend_name: str):
     elif backend_name == "ollama":
         from cobol_intel.llm.ollama_backend import OllamaBackend
         return OllamaBackend()
+    elif backend_name == "local":
+        from cobol_intel.llm.local_backend import LocalBackend
+        return LocalBackend()
     else:
         raise api_error(
             400,
@@ -173,3 +193,24 @@ def _resolve_backend(backend_name: str):
             "Unknown backend",
             f"Unknown backend: {backend_name}",
         )
+
+
+def _to_run_summary(manifest: Manifest, run_dir: Path) -> RunSummary:
+    duration_ms = 0
+    if manifest.finished_at is not None:
+        duration_ms = max(
+            0,
+            int((manifest.finished_at - manifest.started_at).total_seconds() * 1000),
+        )
+    return RunSummary(
+        run_id=manifest.run_id,
+        project_name=manifest.project_name,
+        status=manifest.status.value,
+        started_at=manifest.started_at.isoformat(),
+        finished_at=manifest.finished_at.isoformat() if manifest.finished_at else None,
+        artifacts_dir=str(run_dir),
+        duration_ms=duration_ms,
+        warning_count=len(manifest.warnings),
+        program_count=len(manifest.artifacts.ast),
+        error_count=len(manifest.errors),
+    )

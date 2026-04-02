@@ -23,6 +23,9 @@ def test_explain_request_defaults():
     assert req.mode == "technical"
     assert req.strict_policy is False
     assert req.max_tokens_per_run is None
+    assert req.parallel is False
+    assert req.max_workers is None
+    assert req.cache is True
 
 
 def test_error_response_serializes():
@@ -37,11 +40,14 @@ def test_run_list_response():
         project_name="demo",
         status="completed",
         started_at="2026-04-01T00:00:00Z",
+        finished_at="2026-04-01T00:00:01Z",
         artifacts_dir="artifacts/demo/run_001",
+        duration_ms=1000,
+        warning_count=1,
         program_count=2,
         error_count=0,
     )
-    resp = RunListResponse(runs=[run], total=1)
+    resp = RunListResponse(runs=[run], total=1, limit=50, offset=0)
     assert resp.total == 1
 
 

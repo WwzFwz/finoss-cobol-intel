@@ -24,11 +24,13 @@ def _sample_explanation() -> ExplanationOutput:
 def _sample_key() -> CacheKey:
     return make_cache_key(
         source_text="IDENTIFICATION DIVISION. PROGRAM-ID. PAYMENT.",
+        analysis_payload_json='{"ast": {"program_id": "PAYMENT"}}',
         parser_version="antlr4-v1",
         policy_config_json=None,
         backend="openai",
         model="gpt-4o",
         mode="technical",
+        tool_version="0.3.0",
     )
 
 
@@ -76,7 +78,16 @@ def test_cache_invalidate():
 def test_cache_clear():
     cache = ExplanationCache(cache_dir=_fresh_cache_dir("clear"))
     for i in range(3):
-        key = make_cache_key(f"source{i}", "antlr4", None, "openai", "gpt-4o", "technical")
+        key = make_cache_key(
+            source_text=f"source{i}",
+            analysis_payload_json=f'{{"index": {i}}}',
+            parser_version="antlr4",
+            policy_config_json=None,
+            backend="openai",
+            model="gpt-4o",
+            mode="technical",
+            tool_version="0.3.0",
+        )
         cache.put(key, _sample_explanation())
     removed = cache.clear()
     assert removed == 3

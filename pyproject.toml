@@ -86,6 +86,7 @@ packages = ["src/cobol_intel"]
 [tool.ruff]
 line-length = 100
 src = ["src"]
+exclude = ["src/cobol_intel/parsers/antlr_gen"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]

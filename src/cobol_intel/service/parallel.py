@@ -13,12 +13,23 @@ from cobol_intel.contracts.rules_output import RulesOutput
 from cobol_intel.llm.backend import LLMBackend
 from cobol_intel.llm.explainer import explain_program
 
-# Bounded concurrency per backend — respects rate limits
+# Bounded concurrency per backend. Local/self-hosted backends stay conservative.
 _DEFAULT_WORKERS: dict[str, int] = {
     "claude": 4,
     "openai": 8,
     "ollama": 1,
+    "local": 1,
 }
+
+
+@dataclass(frozen=True)
+class ExplainJob:
+    """One explain task with its own prompt transform policy."""
+
+    index: int
+    ast: ASTOutput
+    rules: RulesOutput | None = None
+    prompt_transform: Callable[[str], str] | None = None
 
 
 @dataclass
@@ -31,53 +42,41 @@ class ParallelResult:
 
 
 def parallel_explain(
-    programs: list[tuple[ASTOutput, RulesOutput | None]],
+    jobs: list[ExplainJob],
     backend: LLMBackend,
     call_graph: CallGraphOutput | None = None,
     mode: ExplanationMode = ExplanationMode.TECHNICAL,
     max_workers: int | None = None,
-    prompt_transform: Callable[[str], str] | None = None,
 ) -> list[ParallelResult]:
-    """Explain multiple programs in parallel with bounded concurrency.
-
-    Args:
-        programs: List of (ast, optional rules) tuples to explain.
-        backend: The LLM backend to use.
-        call_graph: Optional call graph for cross-program context.
-        mode: Explanation mode.
-        max_workers: Override concurrency limit. Defaults per-backend.
-        prompt_transform: Optional prompt transformation (e.g. redaction).
-
-    Returns:
-        List of ParallelResult in the same order as input programs.
-    """
-    if not programs:
+    """Explain multiple programs in parallel with bounded concurrency."""
+    if not jobs:
         return []
 
     workers = max_workers or _DEFAULT_WORKERS.get(backend.name, 4)
-    results: list[ParallelResult] = [ParallelResult(index=i) for i in range(len(programs))]
+    results: list[ParallelResult] = [ParallelResult(index=job.index) for job in jobs]
 
-    def _explain_one(index: int, ast: ASTOutput, rules: RulesOutput | None) -> ParallelResult:
+    def _explain_one(job: ExplainJob) -> ParallelResult:
         try:
+            worker_backend = backend.clone()
             explanation = explain_program(
-                backend=backend,
-                ast=ast,
-                rules=rules,
+                backend=worker_backend,
+                ast=job.ast,
+                rules=job.rules,
                 call_graph=call_graph,
                 mode=mode,
-                prompt_transform=prompt_transform,
+                prompt_transform=job.prompt_transform,
             )
-            return ParallelResult(index=index, explanation=explanation)
+            return ParallelResult(index=job.index, explanation=explanation)
         except Exception as exc:
-            return ParallelResult(index=index, error=exc)
+            return ParallelResult(index=job.index, error=exc)
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
         futures = {
-            executor.submit(_explain_one, i, ast, rules): i
-            for i, (ast, rules) in enumerate(programs)
+            executor.submit(_explain_one, job): position
+            for position, job in enumerate(jobs)
         }
         for future in as_completed(futures):
             result = future.result()
-            results[result.index] = result
+            results[futures[future]] = result
 
     return results

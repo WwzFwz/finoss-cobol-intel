@@ -28,7 +28,12 @@ from cobol_intel.outputs import (
 from cobol_intel.parsers.antlr_parser import ANTLR4Parser
 from cobol_intel.parsers.base import DataItemNode, ParagraphNode, ParseResult, StatementNode
 from cobol_intel.parsers.preprocessor import COBOLPreprocessor
-from cobol_intel.service.governance import default_actor, initialize_audit_log, append_audit_event
+from cobol_intel.service.governance import (
+    append_audit_event,
+    default_actor,
+    initialize_audit_log,
+)
+from cobol_intel.service.run_metrics import build_run_metrics, write_run_metrics
 
 COBOL_SUFFIXES = {".cbl", ".cob", ".cobol"}
 
@@ -88,13 +93,20 @@ def analyze_path(
             file_path=str(file_path),
         )
         parsed = parser.parse(preprocessed.text, file_path=str(file_path))
-        parsed.copybooks_used = sorted(set(parsed.copybooks_used) | set(preprocessed.copybooks_resolved))
+        parsed.copybooks_used = sorted(
+            set(parsed.copybooks_used) | set(preprocessed.copybooks_resolved)
+        )
         parsed.warnings.extend(preprocessed.warnings)
         parse_results.append(parsed)
 
         if parsed.errors:
             manifest.errors.extend(
-                RunError(file=str(file_path), code=ErrorCode.PARSE_SYNTAX, module="parser", message=error)
+                RunError(
+                    file=str(file_path),
+                    code=ErrorCode.PARSE_SYNTAX,
+                    module="parser",
+                    message=error,
+                )
                 for error in parsed.errors
             )
         manifest.warnings.extend(preprocessed.warnings)
@@ -108,11 +120,12 @@ def analyze_path(
     ]
     call_graph = build_call_graph(successful_results)
 
-    ast_dir = ensure_directory(run_dir / "ast")
-    graphs_dir = ensure_directory(run_dir / "graphs")
-    rules_dir = ensure_directory(run_dir / "rules")
-    analysis_dir = ensure_directory(run_dir / "analysis")
-    docs_dir = ensure_directory(run_dir / "docs")
+    ensure_directory(run_dir / "ast")
+    ensure_directory(run_dir / "graphs")
+    ensure_directory(run_dir / "rules")
+    ensure_directory(run_dir / "analysis")
+    ensure_directory(run_dir / "docs")
+    ensure_directory(run_dir / "metrics")
 
     # Build AST outputs and write AST artifacts
     ast_outputs: list[ASTOutput] = []
@@ -173,8 +186,20 @@ def analyze_path(
     manifest.status = _final_status(parse_results)
     manifest.finished_at = datetime.now(timezone.utc)
 
+    metrics = build_run_metrics(
+        manifest,
+        phase="analysis",
+        files_total=len(discovered),
+        files_successful=len(successful_results),
+        files_failed=len(discovered) - len(successful_results),
+    )
+    write_run_metrics(run_dir, manifest, metrics)
+
     summary_rel = Path("docs") / "summary.md"
-    write_text_artifact(run_dir / summary_rel, render_summary_markdown(manifest, rules_outputs, call_graph))
+    write_text_artifact(
+        run_dir / summary_rel,
+        render_summary_markdown(manifest, rules_outputs, call_graph),
+    )
     manifest.artifacts.docs.append(summary_rel.as_posix())
 
     write_json_artifact(run_dir / "manifest.json", manifest)

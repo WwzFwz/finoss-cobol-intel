@@ -149,6 +149,17 @@ class LocalBackend(LLMBackend):
     def model_id(self) -> str:
         return self._model_path
 
+    def clone(self) -> LocalBackend:
+        return LocalBackend(
+            model_path=self._model_path,
+            max_new_tokens=self._max_new_tokens,
+            device=self._device,
+            do_sample=self._do_sample,
+            temperature=self._temperature,
+            top_p=self._top_p,
+            repetition_penalty=self._repetition_penalty,
+        )
+
     def generate(self, prompt: str, system: str = "") -> LLMResponse:
         """Generate a completion using the local model."""
         import torch

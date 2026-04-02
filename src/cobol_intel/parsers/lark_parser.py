@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from lark import Lark, Tree, exceptions as lark_exceptions
+from lark import Lark, Tree
+from lark import exceptions as lark_exceptions
 
 from cobol_intel.parsers.base import (
     COBOLParser,

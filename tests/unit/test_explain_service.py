@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import shutil
 from pathlib import Path
 
@@ -75,6 +76,11 @@ def test_explain_path_records_partial_failure_in_manifest():
     assert any(error.module == "llm" for error in run_result.manifest.errors)
     assert (run_result.run_dir / "manifest.json").exists()
     assert (run_result.run_dir / "logs" / "audit_events.jsonl").exists()
+    metrics_path = run_result.run_dir / "metrics" / "run_metrics.json"
+    assert metrics_path.exists()
+    metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+    assert metrics["phase"] == "explain"
+    assert metrics["error_count"] >= 1
 
 
 def test_explain_path_strict_policy_blocks_sensitive_cloud_backend():
@@ -90,6 +96,10 @@ def test_explain_path_strict_policy_blocks_sensitive_cloud_backend():
     assert explanations == []
     assert backend.calls == 0
     assert any(error.module == "policy" for error in run_result.manifest.errors)
+    metrics = json.loads(
+        (run_result.run_dir / "metrics" / "run_metrics.json").read_text(encoding="utf-8")
+    )
+    assert metrics["policy_violation_count"] >= 1
 
 
 def test_explain_path_stops_when_token_budget_is_reached():
@@ -103,6 +113,50 @@ def test_explain_path_stops_when_token_budget_is_reached():
     )
 
     assert explanations
-    assert len(explanations) < len([result for result in run_result.parse_results if result.success])
+    assert len(explanations) < len(
+        [result for result in run_result.parse_results if result.success]
+    )
     assert run_result.manifest.governance.budget_exhausted is True
     assert any("Token budget" in warning for warning in run_result.manifest.warnings)
+    metrics = json.loads(
+        (run_result.run_dir / "metrics" / "run_metrics.json").read_text(encoding="utf-8")
+    )
+    assert metrics["budget_exhausted"] is True
+    assert metrics["token_usage_total"] > 0
+
+
+def test_explain_path_records_cache_hit_and_miss():
+    backend = CountingOpenAIBackend()
+    cache_dir = RUNTIME_DIR / "cache"
+
+    first_result, first_explanations = explain_path(
+        path=SAMPLES_DIR / "complex" / "payment.cbl",
+        backend=backend,
+        mode=ExplanationMode.TECHNICAL,
+        output_dir=RUNTIME_DIR,
+        cache_dir=cache_dir,
+        use_cache=True,
+    )
+    assert first_explanations
+    assert backend.calls > 0
+    first_metrics = json.loads(
+        (first_result.run_dir / "metrics" / "run_metrics.json").read_text(encoding="utf-8")
+    )
+    assert first_metrics["cache_misses"] >= 1
+
+    backend.calls = 0
+    second_result, second_explanations = explain_path(
+        path=SAMPLES_DIR / "complex" / "payment.cbl",
+        backend=backend,
+        mode=ExplanationMode.TECHNICAL,
+        output_dir=RUNTIME_DIR,
+        cache_dir=cache_dir,
+        use_cache=True,
+    )
+
+    assert second_explanations
+    assert backend.calls == 0
+    second_metrics = json.loads(
+        (second_result.run_dir / "metrics" / "run_metrics.json").read_text(encoding="utf-8")
+    )
+    assert second_metrics["cache_hits"] >= 1

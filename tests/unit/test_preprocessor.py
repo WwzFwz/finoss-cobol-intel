@@ -4,7 +4,6 @@ from pathlib import Path
 
 from cobol_intel.parsers.preprocessor import COBOLPreprocessor
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 

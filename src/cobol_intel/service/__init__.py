@@ -9,13 +9,13 @@ Rules:
 - Writes artifacts to filesystem under artifacts/<project_slug>/<run_id>/.
 """
 
+from cobol_intel.service.explain import explain_path
 from cobol_intel.service.pipeline import (
     AnalysisRunResult,
     analyze_path,
     discover_cobol_files,
     to_ast_output,
 )
-from cobol_intel.service.explain import explain_path
 
 __all__ = [
     "AnalysisRunResult",

@@ -80,6 +80,9 @@ def analyze(
             policy_config_path=policy_config,
             strict_policy=True if strict_policy else None,
             max_tokens_per_run=max_tokens_per_run,
+            parallel=False,
+            max_workers=None,
+            use_cache=True,
         )
         typer.echo(f"[cobol-intel] analyze+explain: {path} via {model}")
         typer.echo(f"Programs explained: {len(explanations)}")
@@ -150,6 +153,9 @@ def explain(
         policy_config_path=policy_config,
         strict_policy=True if strict_policy else None,
         max_tokens_per_run=max_tokens_per_run,
+        parallel=parallel,
+        max_workers=max_workers,
+        use_cache=cache,
     )
     typer.echo(f"[cobol-intel] explain: {path} via {model} ({mode} mode)")
     typer.echo(f"Run ID: {run_result.manifest.run_id}")
