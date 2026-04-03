@@ -9,7 +9,7 @@ Log pengerjaan project. Update setiap sesi kerja.
 **Fase**: 4 - Fine-Tuning Infrastructure And Packaging (in progress)
 **Mulai**: 2026-03-31
 **Target MVP**: -
-**Test Status**: 326/326 pass (91% coverage)
+**Test Status**: 331/331 pass (91% coverage)
 
 Catatan:
 
@@ -163,9 +163,9 @@ Catatan:
 - [x] Read-only API prototype (sudah ada dari Phase 3)
 - [x] Optional extras untuk `local` dan `train`
 - [x] Local backend default dibuat deterministik untuk reproducible offline runs
-- [ ] Run fine-tuning pada GPU (butuh compute)
-- [ ] Publish fine-tuned model ke HuggingFace
-- [ ] Publish package ke PyPI
+- [x] Run fine-tuning pada GPU (QLoRA CodeLlama-7B on Colab T4)
+- [x] Publish fine-tuned model ke HuggingFace (WwzFwz/cobol-explain-7b)
+- [x] Publish package ke PyPI (v0.3.0, v0.3.1)
 
 ---
 
@@ -322,10 +322,23 @@ Catatan:
 
 ---
 
+### 2026-04-03 - Fine-Tuning And PyPI Release
+
+- Fine-tuning berhasil: QLoRA CodeLlama-7B pada Colab T4, 3 epochs,
+  ~80 training samples dari 14 COBOL programs.
+- Model dipublish ke HuggingFace: `WwzFwz/cobol-explain-7b`
+- Package dipublish ke PyPI: v0.3.0 (initial), v0.3.1 (dialect + fine-tuning)
+- Dialect expansion: `PERFORM THRU` dan `EXEC CICS` ditambahkan ke parser
+- Colab notebook ditambahkan untuk reproducible fine-tuning
+- Rerun suite: **331/331 pass**, 91% coverage, ruff clean, tach OK
+
+---
+
 ## Blockers And Open Questions
 
-- Fine-tuning run nyata di GPU belum divalidasi end-to-end
-- Publish package dan model masih menunggu hardening terakhir
+- Semua item Phase 0-4 sudah selesai
+- Extended `EXEC SQL` dan `SEARCH/SEARCH ALL` dialect masih bisa ditambah nanti
+- Sanity test fine-tuned model belum jalan karena OOM di Colab (perlu session baru)
 
 ---
 

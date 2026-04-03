@@ -7,8 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-04-03
+
 ### Added
 
+- **Dialect expansion**: `PERFORM THRU/THROUGH` range support with inclusive
+  paragraph expansion in CFG builder and dead code detector
+- **Dialect expansion**: `EXEC CICS` block-level extraction for static analysis
+  context on mainframe transaction programs
+- Fine-tuned COBOL explanation model on HuggingFace (`WwzFwz/cobol-explain-7b`)
+  — QLoRA CodeLlama-7B trained on pipeline-generated instruction pairs
+- Google Colab notebook for end-to-end fine-tuning (`notebooks/finetune_colab.ipynb`)
+- CI coverage gate at 85% with `antlr_gen/` excluded from coverage metrics
+- CI now lints `tools/` alongside `src/` and `tests/`
+- Community governance files: CODE_OF_CONDUCT, LICENSE, SECURITY.md, SUPPORT.md
 - Fine-tuning dataset builder (`tools/dataset_builder.py`) — generates
   Alpaca/ShareGPT instruction-tuning pairs from the analysis pipeline
 - LoRA/PEFT fine-tuning script (`tools/finetune.py`) — CodeLlama-7B compatible,
@@ -17,6 +29,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   standard HuggingFace models for fully offline inference
 - Prompt strategy comparison in benchmark (`tools/benchmark.py --compare`)
 - `py.typed` marker for PEP 561 typed package support
+
+### Changed
+
+- Trust hardening: contract drift between CLI/API/service resolved, run metrics
+  written for both analyze and explain paths, exponential backoff with jitter,
+  cache keys include `tool_version` and `analysis_hash`, parallel workers use
+  `backend.clone()` for thread safety
+- Coverage config excludes generated ANTLR code for accurate metrics (91%)
+- Test suite expanded to 331 tests
 
 ### Fixed
 

@@ -412,10 +412,10 @@ GUI boleh dibuat nanti, tetapi:
 - [x] Deterministic default untuk offline local inference
 - [x] PyPI build verification (wheel + sdist + py.typed)
 - [x] Docker image untuk on-premise deployment
-- [ ] Run fine-tuning pada GPU compute
-- [ ] Publish model ke HuggingFace
-- [ ] Publish package ke PyPI
-- [x] Comprehensive test suite (326 tests, 91% coverage, CI coverage gate)
+- [x] Run fine-tuning pada GPU compute (QLoRA CodeLlama-7B on Colab T4)
+- [x] Publish model ke HuggingFace (WwzFwz/cobol-explain-7b)
+- [x] Publish package ke PyPI (v0.3.0, v0.3.1)
+- [x] Comprehensive test suite (331 tests, 91% coverage, CI coverage gate)
 
 ---
 
