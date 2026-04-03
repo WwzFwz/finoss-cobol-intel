@@ -30,6 +30,8 @@ Catatan:
 - Trust hardening selesai: contract drift CLI/API/service diperbaiki, run metrics
   untuk analysis dan explain, retry/backoff exponential dengan jitter, cache key
   dengan tool_version + analysis_hash, parallel backend clone, lint baseline bersih.
+- Dialect expansion bertambah: `PERFORM THRU` dan basic `EXEC CICS` block
+  extraction sekarang sudah didukung oleh parser dan regression tests.
 - Fokus perbaikan berikutnya bergeser ke reproducibility, packaging extras,
   local-model governance, dan verifikasi training nyata pada compute/GPU.
 

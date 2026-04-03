@@ -207,17 +207,18 @@ mainframe enterprise.
 - `COPY`, circular `COPY` warning, dan `COPY ... REPLACING`
 - `PIC`, `COMP-3`, `REDEFINES`, `OCCURS`, level-88 conditions
 - `PROCEDURE DIVISION USING`
-- `IF`, `EVALUATE`, `PERFORM`, `CALL`, `STRING`, `UNSTRING`, `INSPECT`,
+- `IF`, `EVALUATE`, `PERFORM`, `PERFORM THRU`, `CALL`, `STRING`, `UNSTRING`, `INSPECT`,
   `GOBACK`, `STOP RUN`
 - file I/O statements: `OPEN`, `READ`, `WRITE`, `REWRITE`, `CLOSE`
 - `EXEC SQL` subset untuk static analysis context extraction
+- basic `EXEC CICS` block extraction untuk static analysis context
 
 ### Belum Dicakup Penuh
 
-- `EXEC CICS`
 - `EXEC SQL` yang lebih luas: multi-statement, host variable edge cases,
   vendor-specific SQL embedding, dan statement selain subset saat ini
-- `PERFORM THRU` / `THROUGH`
+- `EXEC CICS` yang lebih luas: transaction verbs, HANDLE CONDITION, dan
+  opsi yang lebih kompleks dari sekadar block extraction
 - `GO TO`, `ALTER`, dan control-flow legacy lain
 - `SEARCH`, `SEARCH ALL`, dan varian `UNSTRING` / `INSPECT` yang lebih kaya
 - `OCCURS DEPENDING ON`, `INDEXED BY`, `RENAMES`
@@ -228,16 +229,17 @@ mainframe enterprise.
 Untuk codebase finance nyata, urutan prioritas yang paling masuk akal adalah:
 
 1. perluasan `EXEC SQL`
-2. `PERFORM THRU`
+2. perluasan `EXEC CICS`
 3. `SEARCH` / `SEARCH ALL`
 4. varian `UNSTRING` dan `INSPECT` yang lebih luas
-5. `EXEC CICS` jika target Anda benar-benar mainframe transaction systems
+5. `GO TO` / control-flow legacy jika target Anda benar-benar mainframe-heavy
 
 Alasan prioritas ini:
 
 - `EXEC SQL` sangat umum di sistem core banking dan batch processing yang
   terhubung ke DB2 atau database lain, jadi perluasannya tetap punya ROI tinggi.
-- `PERFORM THRU` dan `SEARCH` sering muncul di codebase legacy yang lebih tua.
+- `EXEC CICS` dan `SEARCH` sering muncul di codebase legacy yang lebih tua
+  atau lebih dekat ke mainframe transaction processing.
 - varian `UNSTRING` / `INSPECT` yang lebih kaya penting untuk cleaning dan
   parsing string pada batch processing finance.
 - `EXEC CICS` sangat penting di sebagian bank besar, tetapi tidak semua fintech

@@ -163,9 +163,9 @@ See [docs/OUTPUT_GALLERY.md](docs/OUTPUT_GALLERY.md) for sample artifacts.
 - `WORKING-STORAGE`, `FILE`, `LINKAGE` sections
 - `PROCEDURE DIVISION USING`
 - `PIC`, `COMP-3`, `REDEFINES`, `OCCURS`, level-88 conditions
-- `IF`, `EVALUATE`, `PERFORM`, `CALL`, `STRING`, `UNSTRING`, `INSPECT`
+- `IF`, `EVALUATE`, `PERFORM`, `PERFORM THRU`, `CALL`, `STRING`, `UNSTRING`, `INSPECT`
 - File I/O: `OPEN`, `READ`, `WRITE`, `REWRITE`, `CLOSE`
-- `EXEC SQL` subset for static-analysis context
+- `EXEC SQL` subset and basic `EXEC CICS` block extraction for static-analysis context
 
 ## Development
 
