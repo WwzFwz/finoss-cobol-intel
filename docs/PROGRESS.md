@@ -9,7 +9,7 @@ Log pengerjaan project. Update setiap sesi kerja.
 **Fase**: 4 - Fine-Tuning Infrastructure And Packaging (in progress)
 **Mulai**: 2026-03-31
 **Target MVP**: -
-**Test Status**: 318/318 pass
+**Test Status**: 326/326 pass (91% coverage)
 
 Catatan:
 
@@ -27,6 +27,9 @@ Catatan:
   HTML report, impact analyzer, parallel explain, cache layer, Docker, dan CI.
 - Deep analysis layer selesai: CFG builder, data flow analyzer, dead code
   detector, dan reference indexer — semua terintegrasi ke pipeline dan docs.
+- Trust hardening selesai: contract drift CLI/API/service diperbaiki, run metrics
+  untuk analysis dan explain, retry/backoff exponential dengan jitter, cache key
+  dengan tool_version + analysis_hash, parallel backend clone, lint baseline bersih.
 - Fokus perbaikan berikutnya bergeser ke reproducibility, packaging extras,
   local-model governance, dan verifikasi training nyata pada compute/GPU.
 
@@ -67,7 +70,7 @@ Catatan:
 
 **Error Handling Strategy**
 
-- [ ] Implementasikan error handling end-to-end sesuai ADR-013
+- [x] Implementasikan error handling end-to-end sesuai ADR-013
 - [x] `manifest.json` mendukung `status: partially_completed` beserta `warnings` dan `errors`
 
 ---
@@ -304,10 +307,21 @@ Catatan:
 
 ---
 
+### 2026-04-03 - Trust Hardening And CI Hygiene
+
+- Trust hardening: contract drift CLI/API/service, run metrics both paths,
+  exponential backoff + jitter, cache key with tool_version + analysis_hash,
+  parallel backend clone pattern, lint baseline bersih.
+- CI diperkuat: coverage gate 85%, lint sekarang termasuk `tools/`,
+  coverage config exclude `antlr_gen/`.
+- Docs hygiene: PROGRESS.md test count diupdate ke 326, ADR-013 checklist
+  ditandai selesai (implementasi sudah cukup).
+- Rerun suite: **326/326 pass**, 91% coverage, ruff clean, tach OK
+
+---
+
 ## Blockers And Open Questions
 
-- Error handling ADR-013 baru lengkap setelah service layer menangani partial
-  failures lebih detail
 - Fine-tuning run nyata di GPU belum divalidasi end-to-end
 - Publish package dan model masih menunggu hardening terakhir
 

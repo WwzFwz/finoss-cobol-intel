@@ -398,7 +398,7 @@ GUI boleh dibuat nanti, tetapi:
 - [x] CHANGELOG.md dan versioning (0.3.0)
 - [x] Docker image hardened (multi-stage, non-root, health check)
 - [x] README comprehensive
-- [ ] Optional read-only API prototype untuk consume artifact
+- [x] Optional read-only API prototype untuk consume artifact
 - [ ] Output directory dan artifact browsing yang lebih rapi
 - [ ] Finalisasi layout agar siap dikonsumsi GUI nanti
 
@@ -415,7 +415,7 @@ GUI boleh dibuat nanti, tetapi:
 - [ ] Run fine-tuning pada GPU compute
 - [ ] Publish model ke HuggingFace
 - [ ] Publish package ke PyPI
-- [ ] Comprehensive test suite
+- [x] Comprehensive test suite (326 tests, 91% coverage, CI coverage gate)
 
 ---
 

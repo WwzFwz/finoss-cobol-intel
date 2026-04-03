@@ -97,3 +97,4 @@ addopts = "--tb=short -p no:cacheprovider"
 
 [tool.coverage.run]
 source = ["src/cobol_intel"]
+omit = ["src/cobol_intel/parsers/antlr_gen/*"]

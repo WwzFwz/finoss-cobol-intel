@@ -22,8 +22,8 @@ jobs:
         run: |
           pip install -e ".[api,dev]"
       - name: Lint
-        run: ruff check src/ tests/
+        run: ruff check src/ tests/ tools/
       - name: Check module boundaries
         run: tach check
-      - name: Run tests
-        run: pytest --tb=short -q
+      - name: Run tests with coverage
+        run: pytest --tb=short -q --cov=src/cobol_intel --cov-fail-under=85
