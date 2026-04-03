@@ -3,10 +3,12 @@
 Builds a CFG from the AST by:
 1. Creating blocks per paragraph (splitting at branch points).
 2. Connecting blocks with sequential, branch, and perform edges.
-3. Recording unsupported constructs (GO TO, ALTER, PERFORM THRU) as warnings.
+3. Recording unsupported constructs (GO TO, ALTER) as warnings.
 """
 
 from __future__ import annotations
+
+import re
 
 from cobol_intel.contracts.ast_output import ASTOutput, StatementOut
 from cobol_intel.contracts.cfg_output import CFGBlock, CFGEdge, ControlFlowGraph
@@ -25,6 +27,7 @@ def build_cfg(ast: ASTOutput) -> ControlFlowGraph:
     unsupported: set[str] = set()
 
     paragraph_block_ids: dict[str, str] = {}
+    paragraph_names = [paragraph.name for paragraph in ast.paragraphs]
 
     for para in ast.paragraphs:
         para_blocks, para_edges, para_unsupported = _build_paragraph_blocks(
@@ -40,8 +43,7 @@ def build_cfg(ast: ASTOutput) -> ControlFlowGraph:
         # Collect perform targets and exit blocks from this paragraph
         targets: list[str] = []
         for stmt in _flatten_statements(para.statements):
-            if stmt.type in ("PERFORM", "PERFORM-VARYING") and stmt.target:
-                targets.append(stmt.target)
+            targets.extend(_expand_perform_targets(stmt, paragraph_names))
             if stmt.type in _EXIT_TYPES:
                 for blk in para_blocks:
                     if stmt.type in blk.statement_types:
@@ -52,7 +54,7 @@ def build_cfg(ast: ASTOutput) -> ControlFlowGraph:
                 unsupported.add(label)
 
         if targets:
-            perform_targets[para.name] = targets
+            perform_targets[para.name] = _unique_preserving_order(targets)
 
     # Add perform edges: from paragraph containing PERFORM to target paragraph
     for para_name, targets in perform_targets.items():
@@ -234,4 +236,48 @@ def _flatten_statements(
     for stmt in statements:
         result.append(stmt)
         result.extend(_flatten_statements(stmt.children))
+    return result
+
+
+def _expand_perform_targets(
+    stmt: StatementOut,
+    paragraph_names: list[str],
+) -> list[str]:
+    """Expand PERFORM targets, including THRU ranges, into paragraph names."""
+    if stmt.type in {"PERFORM", "PERFORM-VARYING"} and stmt.target:
+        return [stmt.target]
+    if stmt.type == "PERFORM-THRU" and stmt.target:
+        return _expand_perform_range(stmt.target, paragraph_names)
+    return []
+
+
+def _expand_perform_range(target: str, paragraph_names: list[str]) -> list[str]:
+    """Expand 'A THRU B' into the inclusive paragraph range."""
+    match = re.match(r"^\s*(\S+)\s+THR(?:U|OUGH)\s+(\S+)\s*$", target, re.IGNORECASE)
+    if not match:
+        return [target]
+
+    start_name = match.group(1)
+    end_name = match.group(2)
+    name_to_index = {name.upper(): index for index, name in enumerate(paragraph_names)}
+    start_index = name_to_index.get(start_name.upper())
+    end_index = name_to_index.get(end_name.upper())
+
+    if start_index is None or end_index is None:
+        return [name for name in (start_name, end_name) if name.upper() in name_to_index]
+    if start_index > end_index:
+        return [paragraph_names[start_index], paragraph_names[end_index]]
+    return paragraph_names[start_index : end_index + 1]
+
+
+def _unique_preserving_order(items: list[str]) -> list[str]:
+    """Keep the first occurrence of each target while preserving order."""
+    seen: set[str] = set()
+    result: list[str] = []
+    for item in items:
+        key = item.upper()
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(item)
     return result

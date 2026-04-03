@@ -55,6 +55,34 @@ def test_reachable_paragraph_not_flagged():
     assert len(unreachable) == 0
 
 
+def test_perform_thru_range_is_treated_as_reachable():
+    ast = _make_ast(paragraphs=[
+        ParagraphOut(name="MAIN", statements=[
+            StatementOut(type="PERFORM-THRU", target="INIT THRU FINISH"),
+            StatementOut(type="STOP-RUN"),
+        ]),
+        ParagraphOut(name="INIT", statements=[
+            StatementOut(type="DISPLAY", raw="DISPLAY 'INIT'"),
+        ]),
+        ParagraphOut(name="PROCESS", statements=[
+            StatementOut(type="DISPLAY", raw="DISPLAY 'PROCESS'"),
+        ]),
+        ParagraphOut(name="FINISH", statements=[
+            StatementOut(type="DISPLAY", raw="DISPLAY 'DONE'"),
+        ]),
+    ])
+    cfg = build_cfg(ast)
+    report = detect_dead_code(ast, cfg=cfg)
+    unreachable = [
+        item.name
+        for item in report.items
+        if item.type == DeadCodeType.UNREACHABLE_PARAGRAPH
+    ]
+    assert "INIT" not in unreachable
+    assert "PROCESS" not in unreachable
+    assert "FINISH" not in unreachable
+
+
 def test_unused_data_item_detected():
     ast = _make_ast(
         data_items=[

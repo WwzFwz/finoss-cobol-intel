@@ -19,6 +19,7 @@ COPYBOOKS_DIR = REPO_ROOT / "copybooks"
 
 CORPUS_SAMPLES = [
     "complex/acctval.cbl",
+    "complex/cicsflow.cbl",
     "complex/filebatch.cbl",
     "complex/fileio.cbl",
     "complex/interest.cbl",

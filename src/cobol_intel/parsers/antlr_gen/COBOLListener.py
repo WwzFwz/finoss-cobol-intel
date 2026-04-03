@@ -323,6 +323,15 @@ class COBOLListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by COBOLParser#performRangeStmt.
+    def enterPerformRangeStmt(self, ctx:COBOLParser.PerformRangeStmtContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#performRangeStmt.
+    def exitPerformRangeStmt(self, ctx:COBOLParser.PerformRangeStmtContext):
+        pass
+
+
     # Enter a parse tree produced by COBOLParser#performSimpleStmt.
     def enterPerformSimpleStmt(self, ctx:COBOLParser.PerformSimpleStmtContext):
         pass
@@ -419,6 +428,15 @@ class COBOLListener(ParseTreeListener):
 
     # Exit a parse tree produced by COBOLParser#execSqlStmt.
     def exitExecSqlStmt(self, ctx:COBOLParser.ExecSqlStmtContext):
+        pass
+
+
+    # Enter a parse tree produced by COBOLParser#execCicsStmt.
+    def enterExecCicsStmt(self, ctx:COBOLParser.ExecCicsStmtContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#execCicsStmt.
+    def exitExecCicsStmt(self, ctx:COBOLParser.ExecCicsStmtContext):
         pass
 
 
@@ -653,6 +671,15 @@ class COBOLListener(ParseTreeListener):
 
     # Exit a parse tree produced by COBOLParser#sqlAtom.
     def exitSqlAtom(self, ctx:COBOLParser.SqlAtomContext):
+        pass
+
+
+    # Enter a parse tree produced by COBOLParser#cicsAtom.
+    def enterCicsAtom(self, ctx:COBOLParser.CicsAtomContext):
+        pass
+
+    # Exit a parse tree produced by COBOLParser#cicsAtom.
+    def exitCicsAtom(self, ctx:COBOLParser.CicsAtomContext):
         pass
 
 

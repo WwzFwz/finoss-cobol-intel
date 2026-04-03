@@ -98,6 +98,7 @@ sentence: statement+ DOT
           | subtract_stmt
           | multiply_stmt
           | perform_inline_stmt
+          | perform_range_stmt
           | perform_simple_stmt
           | call_stmt
           | open_stmt
@@ -106,6 +107,7 @@ sentence: statement+ DOT
           | write_stmt
           | rewrite_stmt
           | exec_sql_stmt
+          | exec_cics_stmt
           | if_stmt
           | evaluate_stmt
           | string_stmt
@@ -127,6 +129,10 @@ subtract_stmt: "SUBTRACT" operand "FROM" operand ("GIVING" name_ref)?
 multiply_stmt: "MULTIPLY" operand "BY" operand ("GIVING" name_ref)?
 
 perform_inline_stmt: "PERFORM" "VARYING" NAME "FROM" operand "BY" operand "UNTIL" condition statement* "END-PERFORM"
+
+perform_range_stmt: "PERFORM" NAME perform_thru_kw NAME
+
+perform_thru_kw: "THRU" | "THROUGH"
 
 perform_simple_stmt: "PERFORM" NAME
 
@@ -152,6 +158,8 @@ write_stmt: "WRITE" name_ref ("FROM" operand)?
 rewrite_stmt: "REWRITE" name_ref ("FROM" operand)?
 
 exec_sql_stmt: "EXEC" "SQL" sql_atom+ "END-EXEC"
+
+exec_cics_stmt: "EXEC" "CICS" cics_atom+ "END-EXEC"
 
 if_stmt: "IF" condition statement* else_clause? "END-IF"
 
@@ -262,6 +270,22 @@ sql_atom: NAME
         | RPAREN
         | COMMA
         | COLON
+
+cics_atom: NAME
+         | SQL_IDENT
+         | NUMBER
+         | DECIMAL
+         | STRING_LIT
+         | STAR
+         | EQ
+         | GT
+         | LT
+         | GTE
+         | LTE
+         | LPAREN
+         | RPAREN
+         | COMMA
+         | COLON
 
 // ============================================================
 // TERMINALS

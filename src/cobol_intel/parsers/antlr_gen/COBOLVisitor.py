@@ -184,6 +184,11 @@ class COBOLVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by COBOLParser#performRangeStmt.
+    def visitPerformRangeStmt(self, ctx:COBOLParser.PerformRangeStmtContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by COBOLParser#performSimpleStmt.
     def visitPerformSimpleStmt(self, ctx:COBOLParser.PerformSimpleStmtContext):
         return self.visitChildren(ctx)
@@ -236,6 +241,11 @@ class COBOLVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by COBOLParser#execSqlStmt.
     def visitExecSqlStmt(self, ctx:COBOLParser.ExecSqlStmtContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by COBOLParser#execCicsStmt.
+    def visitExecCicsStmt(self, ctx:COBOLParser.ExecCicsStmtContext):
         return self.visitChildren(ctx)
 
 
@@ -366,6 +376,11 @@ class COBOLVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by COBOLParser#sqlAtom.
     def visitSqlAtom(self, ctx:COBOLParser.SqlAtomContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by COBOLParser#cicsAtom.
+    def visitCicsAtom(self, ctx:COBOLParser.CicsAtomContext):
         return self.visitChildren(ctx)
 
 

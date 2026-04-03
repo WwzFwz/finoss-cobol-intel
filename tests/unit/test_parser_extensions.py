@@ -65,3 +65,27 @@ def test_copy_replacing_sample_resolves_into_data_items():
     assert "WS-CUST-RECORD" in names
     assert "WS-CUST-ID" in names
     assert "WS-CUST-NAME" in names
+
+
+def test_perform_thru_and_exec_cics_parse():
+    result = _parse("complex/cicsflow.cbl")
+
+    assert result.success, result.errors
+    main = next(paragraph for paragraph in result.paragraphs if paragraph.name == "MAIN-PROGRAM")
+    types = [statement.type for statement in main.statements]
+    assert "PERFORM-THRU" in types
+    assert "EXEC-CICS" in types
+
+    perform_stmt = next(
+        statement
+        for statement in main.statements
+        if statement.type == "PERFORM-THRU"
+    )
+    assert perform_stmt.target == "INIT-ROUTINE THRU FINISH-ROUTINE"
+
+    exec_cics_stmt = next(
+        statement
+        for statement in main.statements
+        if statement.type == "EXEC-CICS"
+    )
+    assert exec_cics_stmt.raw.startswith("EXECCICS")

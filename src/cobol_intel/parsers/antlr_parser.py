@@ -130,6 +130,7 @@ class _ASTExtractor(COBOLVisitor):
             ("multiplyStmt", "MULTIPLY"),
             ("performSimpleStmt", "PERFORM"),
             ("performInlineStmt", "PERFORM-VARYING"),
+            ("performRangeStmt", "PERFORM-THRU"),
             ("callStmt", "CALL"),
             ("openStmt", "OPEN"),
             ("closeStmt", "CLOSE"),
@@ -137,6 +138,7 @@ class _ASTExtractor(COBOLVisitor):
             ("writeStmt", "WRITE"),
             ("rewriteStmt", "REWRITE"),
             ("execSqlStmt", "EXEC-SQL"),
+            ("execCicsStmt", "EXEC-CICS"),
             ("ifStmt", "IF"),
             ("evaluateStmt", "EVALUATE"),
             ("stringStmt", "STRING"),
@@ -150,7 +152,7 @@ class _ASTExtractor(COBOLVisitor):
             child = getattr(ctx, attr, lambda: None)()
             if child is not None:
                 stmt = StatementNode(type=stmt_type)
-                if stmt_type == "EXEC-SQL":
+                if stmt_type in {"EXEC-SQL", "EXEC-CICS"}:
                     stmt.raw = child.getText()
                 stmt.target = self._extract_target(child, stmt_type)
                 stmt.condition = self._extract_condition(child, stmt_type)
@@ -168,6 +170,10 @@ class _ASTExtractor(COBOLVisitor):
             name = ctx.NAME()
             if name:
                 return name.getText()
+        elif stmt_type == "PERFORM-THRU":
+            names = self._ctx_list(ctx.NAME())
+            if len(names) >= 2:
+                return f"{names[0].getText()} THRU {names[1].getText()}"
         elif stmt_type in {"READ", "WRITE", "REWRITE", "CLOSE", "INSPECT"}:
             names = self._ctx_list(ctx.nameRef())
             if names:

@@ -238,6 +238,7 @@ class LarkCOBOLParser(COBOLParser):
             "multiply_stmt": "MULTIPLY",
             "perform_simple_stmt": "PERFORM",
             "perform_inline_stmt": "PERFORM-VARYING",
+            "perform_range_stmt": "PERFORM-THRU",
             "call_stmt": "CALL",
             "open_stmt": "OPEN",
             "close_stmt": "CLOSE",
@@ -245,6 +246,7 @@ class LarkCOBOLParser(COBOLParser):
             "write_stmt": "WRITE",
             "rewrite_stmt": "REWRITE",
             "exec_sql_stmt": "EXEC-SQL",
+            "exec_cics_stmt": "EXEC-CICS",
             "if_stmt": "IF",
             "evaluate_stmt": "EVALUATE",
             "string_stmt": "STRING",
@@ -265,6 +267,14 @@ class LarkCOBOLParser(COBOLParser):
             for child in node.children:
                 if hasattr(child, "type") and child.type == "NAME":
                     return str(child)
+        elif stmt_type == "PERFORM-THRU":
+            names = [
+                str(child)
+                for child in node.children
+                if hasattr(child, "type") and child.type == "NAME"
+            ]
+            if len(names) >= 2:
+                return f"{names[0]} THRU {names[1]}"
         elif stmt_type in {"READ", "WRITE", "REWRITE", "CLOSE", "INSPECT"}:
             for child in node.children:
                 if isinstance(child, Tree) and child.data in ("simple_ref", "indexed_ref"):

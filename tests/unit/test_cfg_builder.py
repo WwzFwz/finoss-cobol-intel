@@ -92,6 +92,29 @@ def test_perform_target_recorded():
     assert len(perform_edges) >= 1
 
 
+def test_perform_thru_expands_range_targets():
+    ast = _make_ast(paragraphs=[
+        ParagraphOut(name="MAIN", statements=[
+            StatementOut(type="PERFORM-THRU", target="INIT THRU FINISH"),
+            StatementOut(type="STOP-RUN"),
+        ]),
+        ParagraphOut(name="INIT", statements=[
+            StatementOut(type="DISPLAY", raw="DISPLAY 'INIT'"),
+        ]),
+        ParagraphOut(name="PROCESS", statements=[
+            StatementOut(type="DISPLAY", raw="DISPLAY 'PROCESS'"),
+        ]),
+        ParagraphOut(name="FINISH", statements=[
+            StatementOut(type="DISPLAY", raw="DISPLAY 'DONE'"),
+        ]),
+    ])
+    cfg = build_cfg(ast)
+    assert cfg.perform_targets["MAIN"] == ["INIT", "PROCESS", "FINISH"]
+
+    perform_edges = [edge for edge in cfg.edges if edge.edge_type == "perform"]
+    assert len(perform_edges) == 3
+
+
 def test_stop_run_is_exit_block():
     ast = _make_ast(paragraphs=[
         ParagraphOut(name="MAIN", statements=[

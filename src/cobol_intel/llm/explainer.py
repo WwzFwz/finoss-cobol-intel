@@ -169,9 +169,18 @@ def _select_paragraphs_for_explanation(
         if paragraph.name in rule_paragraphs:
             score += 3
         stmt_types = {statement.type for statement in paragraph.statements}
-        if stmt_types & {"IF", "EVALUATE", "CALL", "EXEC-SQL", "READ", "WRITE", "REWRITE"}:
+        if stmt_types & {
+            "IF",
+            "EVALUATE",
+            "CALL",
+            "EXEC-SQL",
+            "EXEC-CICS",
+            "READ",
+            "WRITE",
+            "REWRITE",
+        }:
             score += 2
-        if stmt_types & {"PERFORM", "PERFORM-VARYING"}:
+        if stmt_types & {"PERFORM", "PERFORM-VARYING", "PERFORM-THRU"}:
             score += 1
         ranked.append((-score, index, paragraph))
 

@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 from collections import deque
 
+from cobol_intel.analysis.cfg_builder import _expand_perform_targets
 from cobol_intel.contracts.ast_output import ASTOutput, DataItemOut, StatementOut
 from cobol_intel.contracts.cfg_output import ControlFlowGraph
 from cobol_intel.contracts.dead_code_output import (
@@ -190,14 +191,12 @@ def _reachable_from_statements(ast: ASTOutput) -> set[str]:
 
     perform_targets_map: dict[str, list[str]] = {}
     exit_paras: set[str] = set()
-    perform_target_set: set[str] = set()
+    paragraph_names = [paragraph.name for paragraph in ast.paragraphs]
 
     for para in ast.paragraphs:
         targets: list[str] = []
         for stmt in _flatten(para.statements):
-            if stmt.type in ("PERFORM", "PERFORM-VARYING") and stmt.target:
-                targets.append(stmt.target)
-                perform_target_set.add(stmt.target)
+            targets.extend(_expand_perform_targets(stmt, paragraph_names))
             if stmt.type in ("STOP-RUN", "GOBACK"):
                 exit_paras.add(para.name)
         if targets:

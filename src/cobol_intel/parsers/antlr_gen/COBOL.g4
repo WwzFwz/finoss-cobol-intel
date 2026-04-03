@@ -126,6 +126,7 @@ statement
     | subtractStmt
     | multiplyStmt
     | performInlineStmt
+    | performRangeStmt
     | performSimpleStmt
     | callStmt
     | openStmt
@@ -134,6 +135,7 @@ statement
     | writeStmt
     | rewriteStmt
     | execSqlStmt
+    | execCicsStmt
     | ifStmt
     | evaluateStmt
     | stringStmt
@@ -150,6 +152,7 @@ addStmt             : ADD operand TO operand (GIVING nameRef)? ;
 subtractStmt        : SUBTRACT operand FROM operand (GIVING nameRef)? ;
 multiplyStmt        : MULTIPLY operand BY operand (GIVING nameRef)? ;
 performInlineStmt   : PERFORM VARYING NAME FROM operand BY operand UNTIL condition statement* END_PERFORM ;
+performRangeStmt    : PERFORM NAME (THRU | THROUGH) NAME ;
 performSimpleStmt   : PERFORM NAME ;
 callStmt            : CALL STRING_LIT USING nameRef+ ;
 openStmt            : OPEN openPhrase+ ;
@@ -161,6 +164,7 @@ atEndClause         : AT END statement* ;
 writeStmt           : WRITE nameRef (FROM operand)? ;
 rewriteStmt         : REWRITE nameRef (FROM operand)? ;
 execSqlStmt         : EXEC SQL sqlAtom+ END_EXEC ;
+execCicsStmt        : EXEC CICS cicsAtom+ END_EXEC ;
 ifStmt              : IF condition statement* elseClause? END_IF ;
 elseClause          : ELSE statement* ;
 evaluateStmt        : EVALUATE evalSubject whenClause+ END_EVALUATE ;
@@ -243,6 +247,29 @@ sqlAtom
     | COLON
     ;
 
+cicsAtom
+    : NAME
+    | SQL_IDENT
+    | FROM
+    | INTO
+    | TO
+    | VALUE
+    | USING
+    | NUMBER
+    | DECIMAL
+    | STRING_LIT
+    | STAR
+    | EQ
+    | GT
+    | LT
+    | GTE
+    | LTE
+    | LPAREN
+    | RPAREN
+    | COMMA
+    | COLON
+    ;
+
 // =================== Lexer Rules ===================
 // Order matters: keywords MUST come before NAME.
 
@@ -294,6 +321,8 @@ VARYING         : 'VARYING' ;
 BY              : 'BY' ;
 UNTIL           : 'UNTIL' ;
 END_PERFORM     : 'END-PERFORM' ;
+THRU            : 'THRU' ;
+THROUGH         : 'THROUGH' ;
 CALL            : 'CALL' ;
 USING           : 'USING' ;
 OPEN            : 'OPEN' ;
@@ -309,6 +338,7 @@ AT              : 'AT' ;
 END             : 'END' ;
 EXEC            : 'EXEC' ;
 SQL             : 'SQL' ;
+CICS            : 'CICS' ;
 END_EXEC        : 'END-EXEC' ;
 IF              : 'IF' ;
 ELSE            : 'ELSE' ;
