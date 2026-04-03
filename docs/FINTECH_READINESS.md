@@ -1,28 +1,28 @@
 # Fintech Readiness Checklist
 
-Dokumen ini merangkum apa yang sudah ada di repo untuk kebutuhan fintech/global
-integration, apa yang masih berupa fondasi, dan apa yang masih gap.
+This document summarizes what already exists in the repo for fintech/global
+integration needs, what is still foundational, and what gaps remain.
 
 ---
 
-## Sudah Ada
+## Already Available
 
 ### Traceable Artifacts
 
-- `manifest.json`, AST, graph, rules, dan explanation artifacts sudah versioned
-- output LLM punya source refs sampai level paragraph dan top-level summary
-- run status mendukung `completed`, `partially_completed`, dan `failed`
+- `manifest.json`, AST, graph, rules, and explanation artifacts are versioned
+- LLM output has source refs down to paragraph level and top-level summary
+- run status supports `completed`, `partially_completed`, and `failed`
 
 ### Audit/Event Trail
 
-- setiap analysis run sekarang menulis `logs/audit_events.jsonl`
-- explain pipeline mencatat event `started`, `completed`, dan `failed`
-- event menyimpan `run_id`, actor, backend, model, file, program, dan sensitivity
+- every analysis run now writes `logs/audit_events.jsonl`
+- explain pipeline logs `started`, `completed`, and `failed` events
+- events store `run_id`, actor, backend, model, file, program, and sensitivity
 
 ### Governance Summary
 
-- manifest sekarang membawa `governance` summary
-- field utamanya:
+- manifest now carries a `governance` summary
+- key fields:
   - `data_sensitivity`
   - `approved_backend`
   - `approved_model`
@@ -32,78 +32,77 @@ integration, apa yang masih berupa fondasi, dan apa yang masih gap.
 
 ### Model Governance
 
-- approved model registry tersedia untuk `claude`, `openai`, dan `ollama`
-- registry dan preset bisa di-load dari `config/llm_policy.json` atau path JSON kustom
-- preset dasar tersedia:
+- approved model registry available for `claude`, `openai`, and `ollama`
+- registry and presets can be loaded from `config/llm_policy.json` or a custom JSON path
+- basic presets available:
   - `fast`
   - `balanced`
   - `audit`
   - `local-only`
-- policy helper memberi warning jika model tidak approved atau cloud backend
-  dipakai untuk workload sensitif
-- strict policy mode bisa hard block request yang melanggar aturan deployment
+- policy helper warns if model is not approved or cloud backend
+  is used for sensitive workloads
+- strict policy mode can hard block requests that violate deployment rules
 
 ### Cost And Reliability Guard
 
-- token budget per explain run sekarang bisa dibatasi
-- backend OpenAI, Claude, dan Ollama punya retry + timeout dasar
-- explain pipeline bisa berhenti lebih awal saat budget habis
+- token budget per explain run can now be capped
+- OpenAI, Claude, and Ollama backends have basic retry + timeout
+- explain pipeline can stop early when budget is exhausted
 
 ### Sensitivity Guard
 
-- AST dianalisis untuk mengklasifikasikan data menjadi `low`, `moderate`,
-  `high`, atau `restricted`
-- prompt cloud bisa melalui redaction helper untuk identifier sensitif
+- AST is analyzed to classify data as `low`, `moderate`, `high`, or `restricted`
+- cloud prompts can go through redaction helper for sensitive identifiers
 
 ---
 
-## Sudah Cukup Untuk
+## Sufficient For
 
-- portfolio dan demo enterprise
+- portfolio and enterprise demo
 - internal PoC
-- pilot terbatas dengan review manusia
-- on-prem story awal via `ollama`
-- diskusi integration readiness dengan tim engineer/security
+- limited pilot with human review
+- initial on-prem story via `ollama`
+- integration readiness discussions with engineering/security teams
 
 ---
 
-## Belum Cukup Untuk Production Global Fintech
+## Not Yet Sufficient For Production Global Fintech
 
 ### Identity And Access
 
-- auth platform
-- RBAC yang enforceable
-- approval workflow multi-user
+- platform auth
+- enforceable RBAC
+- multi-user approval workflow
 
 ### Enterprise Integration
 
-- API versioned yang stabil dan konsisten untuk consumer eksternal
-- webhook / event forwarding ke SIEM atau internal logging stack
-- persistent project store selain filesystem artifact layout
+- stable and consistent versioned API for external consumers
+- webhook / event forwarding to SIEM or internal logging stack
+- persistent project store beyond filesystem artifact layout
 
 ### Operational Controls
 
 - circuit breaker policy
-- observability dashboard untuk latency, failure rate, dan token usage
+- observability dashboard for latency, failure rate, and token usage
 
 ### Data Protection
 
-- field-level classifier yang lebih akurat
-- configurable redaction policy per tenant / per project yang lebih kaya
-- policy routing yang lebih granular dari sekadar cloud vs local
+- more accurate field-level classifier
+- richer configurable redaction policy per tenant / per project
+- more granular policy routing beyond just cloud vs local
 
 ### Model Lifecycle
 
-- model registry dengan approval owner / review date
-- benchmark suite per use case bisnis
-- fine-tuning / LoRA pipeline untuk self-hosted model
+- model registry with approval owner / review date
+- benchmark suite per business use case
+- fine-tuning / LoRA pipeline for self-hosted model
 
 ---
 
-## Prioritas Implementasi Yang Disarankan
+## Recommended Implementation Priority
 
-1. Konsolidasikan kontrak API: typed errors, typed manifests, pagination, dan auth boundary yang jelas
+1. Consolidate API contracts: typed errors, typed manifests, pagination, and clear auth boundary
 2. Circuit breaker + richer fallback policy per backend
-3. Observability dashboard untuk token, latency, cache hit rate, dan failure rate
-4. Sensitivity policy yang lebih granular per tenant / per project
-5. Auth/RBAC jika sudah masuk multi-user deployment
+3. Observability dashboard for tokens, latency, cache hit rate, and failure rate
+4. More granular sensitivity policy per tenant / per project
+5. Auth/RBAC when multi-user deployment is needed

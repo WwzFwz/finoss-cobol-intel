@@ -1,21 +1,21 @@
 # Parser PoC Evaluation Report
 
-Tanggal: 2026-03-31
-Tujuan: Membandingkan lark vs ANTLR4 untuk memutuskan parser default (ADR-006).
+Date: 2026-03-31
+Objective: Compare lark vs ANTLR4 to decide on the default parser (ADR-006).
 
 ---
 
-## Hasil Tes
+## Test Results
 
-Kedua parser diuji pada 5 sample COBOL yang sama, mencakup:
-- Fixed-format dan free-format
+Both parsers were tested on the same 5 COBOL samples, covering:
+- Fixed-format and free-format
 - COPY/COPYBOOK resolution
 - COMP-3, REDEFINES, OCCURS
 - IF, EVALUATE TRUE, PERFORM VARYING
 - CALL, STRING, nested conditions
 - Array access (indexed references)
 
-| Metrik | Lark (Earley) | ANTLR4 |
+| Metric | Lark (Earley) | ANTLR4 |
 |---|---|---|
 | Parse success | 5/5 | 5/5 |
 | Tests passed | 32/32 | 27/27 |
@@ -24,82 +24,82 @@ Kedua parser diuji pada 5 sample COBOL yang sama, mencakup:
 
 ---
 
-## Evaluasi Per Kriteria
+## Evaluation Per Criterion
 
 ### 1. Parse Success / Failure
-**Tie.** Kedua parser berhasil parse semua 5 samples setelah bug fix.
+**Tie.** Both parsers successfully parsed all 5 samples after bug fixes.
 
-Lark butuh 2 fix:
-- Terminal priority untuk COMP-3 vs NAME (resolved via `USAGE_TYPE.2`)
-- Format detection bug di preprocessor (bukan parser issue)
+Lark needed 2 fixes:
+- Terminal priority for COMP-3 vs NAME (resolved via `USAGE_TYPE.2`)
+- Format detection bug in preprocessor (not a parser issue)
 
-ANTLR4 langsung pass tanpa fix — lexer rule ordering secara natural menyelesaikan keyword vs identifier priority.
+ANTLR4 passed immediately without fixes — lexer rule ordering naturally resolves keyword vs identifier priority.
 
-### 2. Effort Implementasi
+### 2. Implementation Effort
 
-| Aspek | Lark | ANTLR4 |
+| Aspect | Lark | ANTLR4 |
 |---|---|---|
-| Grammar file | ~130 baris | ~180 baris |
-| Wrapper code | ~220 baris | ~190 baris |
-| External tooling | Tidak ada | Butuh Java + JAR untuk generate code |
-| Generated code | Tidak ada | 3 file Python (~3000 baris generated) |
-| Debug cycle | Langsung jalankan | Generate → jalankan |
+| Grammar file | ~130 lines | ~180 lines |
+| Wrapper code | ~220 lines | ~190 lines |
+| External tooling | None | Requires Java + JAR for code generation |
+| Generated code | None | 3 Python files (~3000 generated lines) |
+| Debug cycle | Run directly | Generate → run |
 
-**Lark** lebih mudah untuk iterasi cepat: edit grammar, langsung test.
-**ANTLR4** butuh code generation step setiap kali grammar berubah.
+**Lark** is easier for quick iteration: edit grammar, test immediately.
+**ANTLR4** requires a code generation step every time the grammar changes.
 
-### 3. Kualitas Parse Tree
+### 3. Parse Tree Quality
 
-**Lark**: Tree nodes menggunakan rule names sebagai `data`. Token types bisa ambigu tanpa explicit priority annotations. Memerlukan `?` prefix untuk tree flattening.
+**Lark**: Tree nodes use rule names as `data`. Token types can be ambiguous without explicit priority annotations. Requires `?` prefix for tree flattening.
 
-**ANTLR4**: Strongly-typed context objects per rule. IDE autocomplete bekerja. Tree structure lebih predictable dan lebih mudah di-traverse via visitor pattern.
+**ANTLR4**: Strongly-typed context objects per rule. IDE autocomplete works. Tree structure is more predictable and easier to traverse via visitor pattern.
 
-**ANTLR4 menang** di kualitas tree untuk project jangka panjang.
+**ANTLR4 wins** on tree quality for long-term projects.
 
-### 4. Kemudahan Debugging
+### 4. Ease of Debugging
 
-**Lark**: Error messages cukup informatif. `tree.pretty()` berguna untuk visual inspection. Tapi ambiguity di Earley parser bisa sulit di-trace.
+**Lark**: Error messages are reasonably informative. `tree.pretty()` is useful for visual inspection. But ambiguity in Earley parser can be hard to trace.
 
-**ANTLR4**: Error messages lebih structured. Banyak tooling tersedia (ANTLRWorks, VS Code extension). Community grammar COBOL85 tersedia sebagai referensi.
+**ANTLR4**: Error messages are more structured. Extensive tooling available (ANTLRWorks, VS Code extension). Community COBOL85 grammar available as reference.
 
-**ANTLR4 menang** di debugging dan tooling ecosystem.
+**ANTLR4 wins** on debugging and tooling ecosystem.
 
-### 5. Scalability ke COBOL Dialect Nyata
+### 5. Scalability to Real COBOL Dialects
 
-**Lark**: Grammar harus ditulis sendiri dari nol. Earley parser handle ambiguity tapi lebih lambat. Tidak ada community COBOL grammar.
+**Lark**: Grammar must be written from scratch. Earley parser handles ambiguity but is slower. No community COBOL grammar available.
 
-**ANTLR4**: Community COBOL85 grammar tersedia di `antlr/grammars-v4` repo. Bisa digunakan sebagai basis atau referensi. LALR-based, lebih cepat untuk grammar besar.
+**ANTLR4**: Community COBOL85 grammar available in the `antlr/grammars-v4` repo. Can be used as a base or reference. LALR-based, faster for large grammars.
 
-**ANTLR4 menang** secara signifikan untuk jangka panjang.
+**ANTLR4 wins** significantly for long-term use.
 
 ### 6. Deployment / Packaging
 
-**Lark**: Pure Python, zero external dependency selain pip package. Mudah di-bundle.
+**Lark**: Pure Python, zero external dependencies beyond the pip package. Easy to bundle.
 
-**ANTLR4**: Runtime Python ringan (`antlr4-python3-runtime`). Tapi butuh Java untuk regenerate parser kalau grammar berubah. Generated files harus di-commit ke repo.
+**ANTLR4**: Lightweight Python runtime (`antlr4-python3-runtime`). But requires Java to regenerate the parser when the grammar changes. Generated files must be committed to the repo.
 
-**Lark menang** untuk simplicity deployment.
-
----
-
-## Rekomendasi
-
-**ANTLR4 sebagai parser default**, dengan alasan:
-
-1. Keyword/identifier priority diselesaikan secara natural oleh lexer rule ordering — tidak perlu workaround priority annotations
-2. Community COBOL85 grammar tersedia sebagai upgrade path
-3. Strongly-typed visitor pattern lebih maintainable untuk project besar
-4. Tooling dan debugging ecosystem lebih mature
-
-**Mitigasi risiko Java dependency:**
-- Generated Python files di-commit ke repo
-- Contributor hanya butuh Java kalau mengubah grammar
-- End user tidak perlu Java sama sekali
-
-**Lark tetap tersedia** sebagai fallback dan untuk quick prototyping.
+**Lark wins** for deployment simplicity.
 
 ---
 
-## Keputusan
+## Recommendation
 
-Lihat ADR-006 di `docs/DECISIONS.md` — status diubah menjadi **Accepted: ANTLR4**.
+**ANTLR4 as the default parser**, for the following reasons:
+
+1. Keyword/identifier priority is naturally resolved by lexer rule ordering — no need for priority annotation workarounds
+2. Community COBOL85 grammar available as an upgrade path
+3. Strongly-typed visitor pattern is more maintainable for large projects
+4. Tooling and debugging ecosystem is more mature
+
+**Java dependency mitigation:**
+- Generated Python files are committed to the repo
+- Contributors only need Java when modifying the grammar
+- End users do not need Java at all
+
+**Lark remains available** as a fallback and for quick prototyping.
+
+---
+
+## Decision
+
+See ADR-006 in `docs/DECISIONS.md` — status changed to **Accepted: ANTLR4**.

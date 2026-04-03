@@ -1,158 +1,158 @@
 # Progress Tracker
 
-Log pengerjaan project. Update setiap sesi kerja.
+Project work log. Updated every work session.
 
 ---
 
-## Status Saat Ini
+## Current Status
 
-**Fase**: 4 - Fine-Tuning Infrastructure And Packaging (in progress)
-**Mulai**: 2026-03-31
+**Phase**: 4 - Fine-Tuning Infrastructure And Packaging (in progress)
+**Started**: 2026-03-31
 **Target MVP**: -
 **Test Status**: 331/331 pass (91% coverage)
 
-Catatan:
+Notes:
 
-- Fase 0 dan 1 selesai: parser, analysis, artifacts, CLI analyze/graph.
-- Fase 2 selesai: LLM backend interface, Claude + OpenAI + Ollama backends, context builder,
+- Phase 0 and 1 complete: parser, analysis, artifacts, CLI analyze/graph.
+- Phase 2 complete: LLM backend interface, Claude + OpenAI + Ollama backends, context builder,
   explanation engine (3 modes), traceability, evaluation test, CLI explain command.
-- Hardening tambahan selesai: manifest tetap konsisten saat sebagian explain gagal,
-  top-level summary punya source refs, prompt budgeting lebih menjaga rules/graph,
-  dan jumlah paragraph explanation dibatasi agar cost/latency tetap terkendali.
-- Fondasi governance Phase 3 sudah mulai masuk: audit/event log, manifest governance,
-  sensitivity scoring, approved model registry, dan redaction helper.
-- Hardening berikutnya sudah masuk: strict policy enforcement, token budget cap,
-  configurable JSON policy config, dan retry/timeout dasar untuk semua backend.
-- Phase 3 sekarang sudah mencakup versioned API, documentation generator,
-  HTML report, impact analyzer, parallel explain, cache layer, Docker, dan CI.
-- Deep analysis layer selesai: CFG builder, data flow analyzer, dead code
-  detector, dan reference indexer — semua terintegrasi ke pipeline dan docs.
-- Trust hardening selesai: contract drift CLI/API/service diperbaiki, run metrics
-  untuk analysis dan explain, retry/backoff exponential dengan jitter, cache key
-  dengan tool_version + analysis_hash, parallel backend clone, lint baseline bersih.
-- Dialect expansion bertambah: `PERFORM THRU` dan basic `EXEC CICS` block
-  extraction sekarang sudah didukung oleh parser dan regression tests.
-- Fokus perbaikan berikutnya bergeser ke reproducibility, packaging extras,
-  local-model governance, dan verifikasi training nyata pada compute/GPU.
+- Additional hardening complete: manifest stays consistent when some explains fail,
+  top-level summary has source refs, prompt budgeting better preserves rules/graph,
+  and paragraph explanation count is capped to keep cost/latency under control.
+- Phase 3 governance foundations landed: audit/event log, manifest governance,
+  sensitivity scoring, approved model registry, and redaction helper.
+- Further hardening landed: strict policy enforcement, token budget cap,
+  configurable JSON policy config, and basic retry/timeout for all backends.
+- Phase 3 now covers versioned API, documentation generator, HTML report,
+  impact analyzer, parallel explain, cache layer, Docker, and CI.
+- Deep analysis layer complete: CFG builder, data flow analyzer, dead code
+  detector, and reference indexer — all integrated into pipeline and docs.
+- Trust hardening complete: contract drift CLI/API/service resolved, run metrics
+  for both analysis and explain, exponential backoff with jitter, cache key
+  with tool_version + analysis_hash, parallel backend clone, clean lint baseline.
+- Dialect expansion added: `PERFORM THRU` and basic `EXEC CICS` block
+  extraction are now supported by the parser and regression tests.
+- Next focus shifts to reproducibility, packaging extras, local-model
+  governance, and real training verification on compute/GPU.
 
 ---
 
-## Checklist Per Fase
+## Checklist Per Phase
 
-### Fase 0 - Fondasi
+### Phase 0 - Foundation
 
-*Gate: fase ini selesai setelah parser comparison selesai dan keputusan parser dikunci di ADR-006.*
+*Gate: this phase is complete after the parser comparison is done and the parser decision is locked in ADR-006.*
 
 **Project Setup**
 
-- [x] Buat struktur folder sesuai package boundary (`src/cobol_intel/core`, `contracts`, `parsers`, `analysis`, `llm`, `outputs`, `service`, `cli`)
-- [x] Setup `pyproject.toml` dengan dependency management
+- [x] Create folder structure following package boundaries (`src/cobol_intel/core`, `contracts`, `parsers`, `analysis`, `llm`, `outputs`, `service`, `cli`)
+- [x] Setup `pyproject.toml` with dependency management
 - [x] Setup virtual environment
-- [x] Setup linting boundary dengan `tach`
+- [x] Setup linting boundaries with `tach`
 
 **Dataset**
 
-- [x] Kumpulkan sample COBOL awal untuk fixed-format, free-format, `COPY`, `COMP-3`, `REDEFINES`, dan `CALL`
-- [x] Kategorisasi sample untuk corpus parser PoC
-- [x] Minimal 5 sample tersedia sebelum parser comparison dikunci
+- [x] Collect initial COBOL samples for fixed-format, free-format, `COPY`, `COMP-3`, `REDEFINES`, and `CALL`
+- [x] Categorize samples for parser PoC corpus
+- [x] At least 5 samples available before parser comparison is locked
 
 **Parser PoC (Decision Gate)**
 
-- [x] Implementasi PoC minimal dengan `lark` pada corpus sample awal
-- [x] Implementasi PoC minimal dengan ANTLR4 COBOL grammar pada sample yang sama
-- [x] Tulis evaluation report untuk perbandingan `lark` vs ANTLR4
-- [x] Kunci pilihan parser di `DECISIONS.md` ADR-006 - **Accepted: ANTLR4**
+- [x] Implement minimal PoC with `lark` on initial corpus samples
+- [x] Implement minimal PoC with ANTLR4 COBOL grammar on the same samples
+- [x] Write evaluation report comparing `lark` vs ANTLR4
+- [x] Lock parser choice in `DECISIONS.md` ADR-006 - **Accepted: ANTLR4**
 
 **Contracts**
 
-- [x] Definisikan `manifest.json` schema di `contracts/`
-- [x] Definisikan `run_id` format final dan catat ke ADR-014
-- [x] Definisikan AST output schema minimal yang tervalidasi (`contracts/ast_output.py`)
-- [x] Tulis contract test pertama yang validasi schema manifest
+- [x] Define `manifest.json` schema in `contracts/`
+- [x] Define final `run_id` format and document in ADR-014
+- [x] Define minimal validated AST output schema (`contracts/ast_output.py`)
+- [x] Write first contract test validating manifest schema
 
 **Error Handling Strategy**
 
-- [x] Implementasikan error handling end-to-end sesuai ADR-013
-- [x] `manifest.json` mendukung `status: partially_completed` beserta `warnings` dan `errors`
+- [x] Implement end-to-end error handling per ADR-013
+- [x] `manifest.json` supports `status: partially_completed` with `warnings` and `errors`
 
 ---
 
-### Fase 1 - Static Analysis Core
+### Phase 1 - Static Analysis Core
 
-*Gate: semua corpus test harus pass, artifact utama harus keluar, dan regression baseline mulai terbentuk.*
+*Gate: all corpus tests must pass, main artifacts must be produced, and regression baseline must be forming.*
 
 **Parser**
 
-- [x] Parser lengkap: IDENTIFICATION, ENVIRONMENT, DATA, PROCEDURE DIVISION
-- [x] Handle fixed-format preprocessing dasar
-- [x] Handle sample dengan `PIC`, `COMP-3`, `REDEFINES`, `OCCURS`, dan `COPY`
-- [x] Corpus test awal untuk sample parser berjalan tanpa crash
+- [x] Complete parser: IDENTIFICATION, ENVIRONMENT, DATA, PROCEDURE DIVISION
+- [x] Handle basic fixed-format preprocessing
+- [x] Handle samples with `PIC`, `COMP-3`, `REDEFINES`, `OCCURS`, and `COPY`
+- [x] Initial corpus tests for parser samples run without crashes
 
 **Resolver And Graph**
 
-- [x] COPYBOOK resolver awal untuk preprocessing
-- [x] Deteksi circular dependency antar COPYBOOK
-- [x] CALL graph builder untuk static calls
+- [x] Initial COPYBOOK resolver for preprocessing
+- [x] Circular dependency detection between COPYBOOKs
+- [x] CALL graph builder for static calls
 - [x] Dependency graph output: JSON adjacency list + Mermaid diagram
 
 **Business Rules**
 
-- [x] Extractor untuk `IF` dan `EVALUATE` conditions di PROCEDURE DIVISION
-- [x] Output JSON business rules tervalidasi terhadap schema
+- [x] Extractor for `IF` and `EVALUATE` conditions in PROCEDURE DIVISION
+- [x] JSON business rules output validated against schema
 
 **Artifacts And Service**
 
-- [x] JSON artifact writer yang konsisten ke artifact directory
-- [x] Service pipeline dasar untuk parse -> analyze -> write artifacts
-- [x] CLI `analyze` dan `graph` memakai service layer
+- [x] Consistent JSON artifact writer to artifact directory
+- [x] Basic service pipeline for parse -> analyze -> write artifacts
+- [x] CLI `analyze` and `graph` use service layer
 
 **Testing**
 
-- [x] Corpus test suite: minimal 10 program COBOL dari sumber berbeda
-- [x] Contract test suite untuk manifest, AST, graph, rules, dan run_id
-- [x] Regression test: expected output parser/artifact di-commit dan dijaga stabil
-- [x] Integration test untuk Phase 1 artifact pipeline
+- [x] Corpus test suite: at least 10 COBOL programs from different sources
+- [x] Contract test suite for manifest, AST, graph, rules, and run_id
+- [x] Regression test: expected parser/artifact output committed and kept stable
+- [x] Integration test for Phase 1 artifact pipeline
 
 ---
 
-### Fase 2 - LLM Integration
+### Phase 2 - LLM Integration
 
-- [x] `LLMBackend` abstract interface di `llm/backend.py`
+- [x] `LLMBackend` abstract interface in `llm/backend.py`
 - [x] `ClaudeBackend` implementation (`llm/claude_backend.py`)
 - [x] `OllamaBackend` implementation (`llm/ollama_backend.py`)
 - [x] Context builder: AST + rules + graph -> LLM-ready prompt (`llm/context_builder.py`)
-- [x] Smart chunker berbasis struktur paragraph/section (truncation + per-paragraph prompts)
+- [x] Smart chunker based on paragraph/section structure (truncation + per-paragraph prompts)
 - [x] Explanation engine mode `technical`
 - [x] Explanation engine mode `business`
 - [x] Explanation engine mode `audit`
-- [x] Semua output LLM include traceability ke artifact sumber (`ParagraphExplanation.source`)
-- [x] Evaluation test: raw LLM vs pipeline + LLM pada sample yang sama
+- [x] All LLM output includes traceability to source artifact (`ParagraphExplanation.source`)
+- [x] Evaluation test: raw LLM vs pipeline + LLM on the same sample
 
 ---
 
-### Fase 3 - Output And Polish
+### Phase 3 - Output And Polish
 
-- [x] Audit/event log artifact untuk analysis dan explain runs
-- [x] Governance summary pada manifest
+- [x] Audit/event log artifact for analysis and explain runs
+- [x] Governance summary in manifest
 - [x] Approved model registry + preset helper
 - [x] Sensitivity classification helper
-- [x] Redaction helper untuk prompt cloud yang sensitif
-- [x] Strict policy enforcement untuk workload sensitif pada backend cloud
+- [x] Redaction helper for sensitive cloud prompts
+- [x] Strict policy enforcement for sensitive workloads on cloud backends
 - [x] Token budget per explain run
-- [x] Retry / timeout dasar untuk backend OpenAI, Claude, dan Ollama
+- [x] Basic retry / timeout for OpenAI, Claude, and Ollama backends
 - [x] Configurable policy registry via JSON config
-- [x] Documentation generator output Markdown per program
+- [x] Documentation generator Markdown output per program
 - [x] HTML report generator
 - [x] Change impact analyzer
 - [x] Deep analysis: CFG builder, data flow analyzer, dead code detector, reference indexer
-- [x] CLI interface lengkap dan terdokumentasi
-- [x] README dengan feature overview dan CLI usage
-- [x] Docker image untuk on-premise deployment
-- [x] `CHANGELOG.md` dan versioning strategy (bumped to 0.3.0)
+- [x] Complete and documented CLI interface
+- [x] README with feature overview and CLI usage
+- [x] Docker image for on-premise deployment
+- [x] `CHANGELOG.md` and versioning strategy (bumped to 0.3.0)
 
 ---
 
-### Fase 4 - Fine-Tuning Infrastructure And Packaging
+### Phase 4 - Fine-Tuning Infrastructure And Packaging
 
 - [x] Fine-tuning dataset builder (`tools/dataset_builder.py`)
 - [x] LoRA/PEFT fine-tuning script (`tools/finetune.py`)
@@ -160,12 +160,12 @@ Catatan:
 - [x] Prompt comparison benchmark (`raw source` vs `structured pipeline`)
 - [x] PyPI build verified (wheel + sdist + py.typed)
 - [x] Fixed pyproject.toml TOML ordering bug (dependencies under project.urls)
-- [x] Read-only API prototype (sudah ada dari Phase 3)
-- [x] Optional extras untuk `local` dan `train`
-- [x] Local backend default dibuat deterministik untuk reproducible offline runs
-- [x] Run fine-tuning pada GPU (QLoRA CodeLlama-7B on Colab T4)
-- [x] Publish fine-tuned model ke HuggingFace (WwzFwz/cobol-explain-7b)
-- [x] Publish package ke PyPI (v0.3.0, v0.3.1)
+- [x] Read-only API prototype (already present from Phase 3)
+- [x] Optional extras for `local` and `train`
+- [x] Local backend defaults made deterministic for reproducible offline runs
+- [x] Run fine-tuning on GPU (QLoRA CodeLlama-7B on Colab T4)
+- [x] Publish fine-tuned model to HuggingFace (WwzFwz/cobol-explain-7b)
+- [x] Publish package to PyPI (v0.3.0, v0.3.1)
 
 ---
 
@@ -173,138 +173,138 @@ Catatan:
 
 ### 2026-03-31
 
-- Diskusi konsep, problem statement, arsitektur, dan pain point fintech
-- Dibuat: `docs/PLAN.md`, `docs/ARCHITECTURE.md`, `docs/RESEARCH.md`, `docs/DECISIONS.md`, `docs/PROGRESS.md`
-- Review feedback teknis dari rekan dan update besar pada planning docs
-- Tambah `docs/SUITE_VISION.md` untuk menjaga arah suite jangka panjang tanpa menambah scope MVP
+- Discussed concept, problem statement, architecture, and fintech pain points
+- Created: `docs/PLAN.md`, `docs/ARCHITECTURE.md`, `docs/RESEARCH.md`, `docs/DECISIONS.md`, `docs/PROGRESS.md`
+- Technical feedback review from peer and major updates to planning docs
+- Added `docs/SUITE_VISION.md` to maintain long-term suite direction without expanding MVP scope
 
 ### 2026-03-31 - Phase 0 Stabilization
 
-- Jalankan test suite dari `.venv`
-- Ditemukan error pada `tmp_path` pytest akibat akses ditolak ke Windows temp directory
-- Ganti test copybook agar memakai fixture statis di repo, bukan temporary directory runtime
-- Rapikan konfigurasi pytest dengan menonaktifkan `cacheprovider` default yang memicu warning permission di Windows
-- Rerun suite hijau
+- Ran test suite from `.venv`
+- Found error with `tmp_path` pytest due to denied access to Windows temp directory
+- Changed copybook test to use static fixture in repo instead of runtime temporary directory
+- Cleaned up pytest config by disabling default `cacheprovider` that triggered permission warnings on Windows
+- Rerun suite green
 
 ### 2026-03-31 - ANTLR4 PoC And ADR-006
 
-- Implementasi ANTLR4 grammar dan parser wrapper
-- Tulis `docs/PARSER_EVALUATION.md` untuk comparison Lark vs ANTLR4
-- ADR-006 dikunci: **Accepted: ANTLR4** sebagai parser default
+- Implemented ANTLR4 grammar and parser wrapper
+- Wrote `docs/PARSER_EVALUATION.md` for Lark vs ANTLR4 comparison
+- ADR-006 locked: **Accepted: ANTLR4** as default parser
 
 ### 2026-03-31 - Phase 1 Core Implementation
 
-- Implementasi `analysis.call_graph` dengan adjacency list
-- Implementasi `analysis.rules_extractor` untuk `IF`, `EVALUATE`, dan `CONDITION-88`
-- Implementasi `outputs.writers` untuk JSON/text artifacts dan summary Markdown
-- Implementasi `service.pipeline` untuk parse -> analyze -> write artifacts
-- Tambah integration test untuk artifact pipeline
-- Sambungkan CLI `analyze` dan `graph` ke service layer
+- Implemented `analysis.call_graph` with adjacency list
+- Implemented `analysis.rules_extractor` for `IF`, `EVALUATE`, and `CONDITION-88`
+- Implemented `outputs.writers` for JSON/text artifacts and summary Markdown
+- Implemented `service.pipeline` for parse -> analyze -> write artifacts
+- Added integration test for artifact pipeline
+- Connected CLI `analyze` and `graph` to service layer
 - Rerun suite: **100/100 pass**
 
 ### 2026-03-31 - Phase 1 Completion
 
-- Hardening grammar parser untuk `ENVIRONMENT DIVISION`, `FILE SECTION`,
-  `LINKAGE SECTION`, `SELECT/ASSIGN`, `FD`, dan `GOBACK`
-- Tambah circular `COPY` detection di preprocessor beserta warning yang stabil
-- Tambah 3 sample program baru sehingga corpus committed menjadi 10 file
-- Tambah corpus smoke test untuk ANTLR4 dan Lark pada seluruh sample corpus
-- Tambah regression baseline committed untuk AST, rules, dan call graph
+- Hardened grammar parser for `ENVIRONMENT DIVISION`, `FILE SECTION`,
+  `LINKAGE SECTION`, `SELECT/ASSIGN`, `FD`, and `GOBACK`
+- Added circular `COPY` detection in preprocessor with stable warnings
+- Added 3 new sample programs bringing committed corpus to 10 files
+- Added corpus smoke test for ANTLR4 and Lark across entire sample corpus
+- Added committed regression baseline for AST, rules, and call graph
 - Rerun suite: **124/124 pass**
 
 ### 2026-03-31 - Parser Coverage Expansion
 
-- Tambah dukungan parser untuk `EXEC SQL`
-- Tambah file I/O statements: `OPEN`, `READ`, `WRITE`, `REWRITE`, `CLOSE`
-- Tambah `COPY ... REPLACING` di preprocessor
-- Tambah `PROCEDURE DIVISION USING` ke parse result dan AST artifact
-- Tambah dukungan `UNSTRING` dan `INSPECT`
-- Tambah sample corpus baru untuk SQL, file batch, dan copybook replacing
+- Added parser support for `EXEC SQL`
+- Added file I/O statements: `OPEN`, `READ`, `WRITE`, `REWRITE`, `CLOSE`
+- Added `COPY ... REPLACING` in preprocessor
+- Added `PROCEDURE DIVISION USING` to parse result and AST artifact
+- Added `UNSTRING` and `INSPECT` support
+- Added new corpus samples for SQL, file batch, and copybook replacing
 - Rerun suite: **134/134 pass**
 
 ### 2026-03-31 - Phase 2 LLM Integration
 
-- Implementasi `LLMBackend` abstract interface dan `LLMResponse` dataclass
-- Implementasi `ClaudeBackend` (Anthropic SDK) dan `OllamaBackend` (local model)
-- Implementasi `context_builder.py` — transforms Phase 1 artifacts ke structured prompts
-  dengan system prompt per mode (technical/business/audit) dan smart truncation
-- Implementasi `explainer.py` — orchestrates context builder + backend, produces
-  `ExplanationOutput` dengan traceability via `SourceRef` per paragraph
-- Implementasi `service/explain.py` — service layer untuk Phase 1 + LLM explanation
-- CLI `explain` command sekarang fully functional dengan `--model` dan `--mode` flags
-- CLI `analyze` sekarang bisa opsional run LLM explanation via `--model` flag
-- Contract: `ExplanationOutput` schema dengan `ParagraphExplanation` dan traceability
+- Implemented `LLMBackend` abstract interface and `LLMResponse` dataclass
+- Implemented `ClaudeBackend` (Anthropic SDK) and `OllamaBackend` (local model)
+- Implemented `context_builder.py` — transforms Phase 1 artifacts to structured prompts
+  with system prompt per mode (technical/business/audit) and smart truncation
+- Implemented `explainer.py` — orchestrates context builder + backend, produces
+  `ExplanationOutput` with traceability via `SourceRef` per paragraph
+- Implemented `service/explain.py` — service layer for Phase 1 + LLM explanation
+- CLI `explain` command now fully functional with `--model` and `--mode` flags
+- CLI `analyze` now optionally runs LLM explanation via `--model` flag
+- Contract: `ExplanationOutput` schema with `ParagraphExplanation` and traceability
 - Tests: contract (5), context builder (10), explainer mock (7), evaluation (5)
 - Rerun suite: **164/164 pass**
 
 ### 2026-04-01 - Governance Foundations
 
-- Tambah contract baru untuk governance dan audit events
-- Manifest sekarang menyimpan governance summary dan artifact logs
-- Service layer sekarang menulis `logs/audit_events.jsonl` untuk analysis dan explain runs
-- Tambah approved model registry + preset helper untuk `claude`, `openai`, dan `ollama`
-- Tambah sensitivity classifier dan redaction helper untuk cloud prompts
-- Tambah unit/contract tests untuk governance, policy, dan audit logging
+- Added new contracts for governance and audit events
+- Manifest now stores governance summary and artifact logs
+- Service layer now writes `logs/audit_events.jsonl` for analysis and explain runs
+- Added approved model registry + preset helper for `claude`, `openai`, and `ollama`
+- Added sensitivity classifier and redaction helper for cloud prompts
+- Added unit/contract tests for governance, policy, and audit logging
 - Rerun suite: **186/186 pass**
 
 ### 2026-04-01 - Policy Enforcement And Backend Resilience
 
-- Tambah `config/llm_policy.json` sebagai policy registry default yang bisa dioverride
-- Tambah strict policy enforcement untuk block cloud explain pada artifact sensitif
-- Tambah token budget enforcement di `service/explain.py`
-- Tambah retry + timeout dasar di backend Claude, OpenAI, dan Ollama
-- Tambah redaction pattern yang lebih luas untuk field PII umum
-- Tambah test untuk policy config, strict block, token budget, dan retry behavior
+- Added `config/llm_policy.json` as default policy registry that can be overridden
+- Added strict policy enforcement to block cloud explain on sensitive artifacts
+- Added token budget enforcement in `service/explain.py`
+- Added basic retry + timeout for Claude, OpenAI, and Ollama backends
+- Added broader redaction patterns for common PII fields
+- Added tests for policy config, strict block, token budget, and retry behavior
 - Rerun suite: **190/190 pass**
 
 ### 2026-04-02 - Phase 4: Fine-Tuning Infrastructure And PyPI Readiness
 
-- Implementasi `tools/dataset_builder.py`: generate instruction-tuning JSONL
-  dari pipeline output (80 samples dari 13 programs — program-level, paragraph,
-  data flow, dead code pairs). Support Alpaca dan ShareGPT format.
-- Implementasi `tools/finetune.py`: LoRA/PEFT training script untuk
-  CodeLlama-7B atau model sejenis. Support 4-bit QLoRA, checkpoint resume,
-  train/eval split, dan reproducible config saving.
-- Implementasi `src/cobol_intel/llm/local_backend.py`: backend adapter untuk
-  load fine-tuned HuggingFace model secara lokal. Auto-detect PEFT model,
+- Implemented `tools/dataset_builder.py`: generates instruction-tuning JSONL
+  from pipeline output (80 samples from 13 programs — program-level, paragraph,
+  data flow, dead code pairs). Supports Alpaca and ShareGPT formats.
+- Implemented `tools/finetune.py`: LoRA/PEFT training script for
+  CodeLlama-7B or similar models. Supports 4-bit QLoRA, checkpoint resume,
+  train/eval split, and reproducible config saving.
+- Implemented `src/cobol_intel/llm/local_backend.py`: backend adapter for
+  loading fine-tuned HuggingFace models locally. Auto-detects PEFT models,
   Alpaca prompt template matching finetune.py.
-- CLI update: tambah `--model local` ke analyze dan explain commands.
-- PyPI readiness: tambah `py.typed` marker (PEP 561), fix pyproject.toml
-  TOML ordering bug (`dependencies` salah masuk `[project.urls]`), verify
-  wheel build clean (`uv build` → sdist + wheel).
-- Benchmark expansion: tambah `--compare` flag untuk raw vs pipeline prompt
+- CLI update: added `--model local` to analyze and explain commands.
+- PyPI readiness: added `py.typed` marker (PEP 561), fixed pyproject.toml
+  TOML ordering bug (`dependencies` wrongly nested under `[project.urls]`), verified
+  clean wheel build (`uv build` → sdist + wheel).
+- Benchmark expansion: added `--compare` flag for raw vs pipeline prompt
   strategy comparison (structured sections, traceability, rules reference).
-- Hardening Phase 4 awal: backend `local` sekarang dikenali sebagai
-  `local_only`, packaging extras `.[local]` dan `.[train]` ditambahkan,
-  dan benchmark/docs dirapikan supaya tidak overclaim sebagai live model eval.
+- Early Phase 4 hardening: `local` backend now recognized as
+  `local_only`, packaging extras `.[local]` and `.[train]` added,
+  and benchmark/docs cleaned up to not overclaim as live model eval.
 - Parse success rate: 13/13 (100%), avg token savings: 28.6%
 - Rerun suite: **318/318 pass**, tach boundaries OK
 
 ### 2026-04-01 - Phase 3 Completion: Polish And Packaging
 
-- Bump version ke 0.3.0 (pyproject.toml + `__init__.py`)
-- Update CHANGELOG.md dengan semua fitur 0.3.0
-- CLI polish: tambah `--version` / `-V` flag, perbaiki help text semua command
-- Dockerfile hardened: multi-stage build, non-root user, health check, CLI entrypoint
-- docker-compose update: override entrypoint untuk API mode
-- README update: tambah deep analysis features, `analysis/` dir di artifact tree, `--version`
+- Bumped version to 0.3.0 (pyproject.toml + `__init__.py`)
+- Updated CHANGELOG.md with all 0.3.0 features
+- CLI polish: added `--version` / `-V` flag, improved help text for all commands
+- Hardened Dockerfile: multi-stage build, non-root user, health check, CLI entrypoint
+- docker-compose update: override entrypoint for API mode
+- README update: added deep analysis features, `analysis/` dir in artifact tree, `--version`
 - Rerun suite: **313/313 pass**, tach boundaries OK
 
 ### 2026-04-01 - Deep Analysis Layer And Pipeline Integration
 
-- Implementasi 4 modul analisis baru:
-  - **CFG Builder**: intra-program control flow graph dengan basic blocks, branch/perform/fallthrough edges
+- Implemented 4 new analysis modules:
+  - **CFG Builder**: intra-program control flow graph with basic blocks, branch/perform/fallthrough edges
   - **Reference Indexer**: field-level read/write/condition/call_param classification per statement
   - **Data Flow Analyzer**: directed field-to-field data flow graph (MOVE, COMPUTE, READ INTO, WRITE FROM, CALL USING)
   - **Dead Code Detector**: unreachable paragraphs (BFS reachability), unused data items, trivially dead branches
-- Tambah contracts: `cfg_output.py`, `data_flow_output.py`, `dead_code_output.py`, `reference_output.py`
-- Tambah `analysis` field di `ArtifactIndex` manifest untuk track artifacts analisis baru
-- Integrasi ke `pipeline.py`: setiap program yang berhasil di-parse sekarang menghasilkan
-  reference index, CFG, data flow graph (JSON + Mermaid), dan dead code report
-- Integrasi ke doc generator: program docs sekarang include data flow diagram dan dead code findings
-- Integrasi ke doc service: load analysis artifacts dari completed run untuk docs generation
-- Update integration test untuk verifikasi analysis artifacts ditulis ke disk
-- Tambah 57 tests baru (unit + contract) untuk 4 modul analisis
+- Added contracts: `cfg_output.py`, `data_flow_output.py`, `dead_code_output.py`, `reference_output.py`
+- Added `analysis` field in `ArtifactIndex` manifest for tracking new analysis artifacts
+- Integrated into `pipeline.py`: every successfully parsed program now produces
+  reference index, CFG, data flow graph (JSON + Mermaid), and dead code report
+- Integrated into doc generator: program docs now include data flow diagram and dead code findings
+- Integrated into doc service: loads analysis artifacts from completed runs for docs generation
+- Updated integration test to verify analysis artifacts are written to disk
+- Added 57 new tests (unit + contract) for 4 analysis modules
 - Rerun suite: **313/313 pass**, tach boundaries OK
 
 ---
@@ -313,39 +313,39 @@ Catatan:
 
 - Trust hardening: contract drift CLI/API/service, run metrics both paths,
   exponential backoff + jitter, cache key with tool_version + analysis_hash,
-  parallel backend clone pattern, lint baseline bersih.
-- CI diperkuat: coverage gate 85%, lint sekarang termasuk `tools/`,
-  coverage config exclude `antlr_gen/`.
-- Docs hygiene: PROGRESS.md test count diupdate ke 326, ADR-013 checklist
-  ditandai selesai (implementasi sudah cukup).
+  parallel backend clone pattern, clean lint baseline.
+- CI strengthened: coverage gate 85%, lint now includes `tools/`,
+  coverage config excludes `antlr_gen/`.
+- Docs hygiene: PROGRESS.md test count updated to 326, ADR-013 checklist
+  marked complete (implementation sufficient).
 - Rerun suite: **326/326 pass**, 91% coverage, ruff clean, tach OK
 
 ---
 
 ### 2026-04-03 - Fine-Tuning And PyPI Release
 
-- Fine-tuning berhasil: QLoRA CodeLlama-7B pada Colab T4, 3 epochs,
-  ~80 training samples dari 14 COBOL programs.
-- Model dipublish ke HuggingFace: `WwzFwz/cobol-explain-7b`
-- Package dipublish ke PyPI: v0.3.0 (initial), v0.3.1 (dialect + fine-tuning)
-- Dialect expansion: `PERFORM THRU` dan `EXEC CICS` ditambahkan ke parser
-- Colab notebook ditambahkan untuk reproducible fine-tuning
+- Fine-tuning successful: QLoRA CodeLlama-7B on Colab T4, 3 epochs,
+  ~80 training samples from 14 COBOL programs.
+- Model published to HuggingFace: `WwzFwz/cobol-explain-7b`
+- Package published to PyPI: v0.3.0 (initial), v0.3.1 (dialect + fine-tuning)
+- Dialect expansion: `PERFORM THRU` and `EXEC CICS` added to parser
+- Colab notebook added for reproducible fine-tuning
 - Rerun suite: **331/331 pass**, 91% coverage, ruff clean, tach OK
 
 ---
 
 ## Blockers And Open Questions
 
-- Semua item Phase 0-4 sudah selesai
-- Extended `EXEC SQL` dan `SEARCH/SEARCH ALL` dialect masih bisa ditambah nanti
-- Sanity test fine-tuned model belum jalan karena OOM di Colab (perlu session baru)
+- All Phase 0-4 items are complete
+- Extended `EXEC SQL` and `SEARCH/SEARCH ALL` dialect can still be added later
+- Sanity test for fine-tuned model not yet run due to OOM on Colab (needs a new session)
 
 ---
 
-## Resources Yang Berguna
+## Useful Resources
 
-- `tests/corpus/test_parser_poc.py` sebagai baseline Lark PoC
-- `tests/corpus/test_antlr4_poc.py` sebagai baseline ANTLR4 PoC
-- `tests/unit/test_call_graph.py` untuk graph extraction
-- `tests/unit/test_rules_extractor.py` untuk business rules extraction
-- `tests/integration/test_service_pipeline.py` untuk artifact pipeline end-to-end
+- `tests/corpus/test_parser_poc.py` as Lark PoC baseline
+- `tests/corpus/test_antlr4_poc.py` as ANTLR4 PoC baseline
+- `tests/unit/test_call_graph.py` for graph extraction
+- `tests/unit/test_rules_extractor.py` for business rules extraction
+- `tests/integration/test_service_pipeline.py` for artifact pipeline end-to-end

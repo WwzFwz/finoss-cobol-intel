@@ -1,11 +1,11 @@
 # Artifact Example
 
-Dokumen ini memberi contoh singkat bentuk artifact yang dihasilkan
-`cobol-intel` setelah satu kali run analisis.
+This document provides a brief example of the artifacts produced by
+`cobol-intel` after a single analysis run.
 
-Tujuannya bukan mendokumentasikan setiap field secara lengkap, tetapi memberi
-gambaran publish-ready untuk calon pengguna repo, recruiter, atau integrator
-yang ingin cepat memahami output-nya.
+The purpose is not to document every field exhaustively, but to give a
+publish-ready overview for prospective users, recruiters, or integrators
+who want to quickly understand the output.
 
 ---
 
@@ -30,7 +30,7 @@ artifacts/samples/run_20260331_001/
 
 ## `manifest.json`
 
-Contoh bentuk root artifact:
+Example root artifact:
 
 ```json
 {
@@ -57,7 +57,7 @@ Contoh bentuk root artifact:
 
 ## AST Artifact
 
-Potongan dari `ast/payment.json`:
+Excerpt from `ast/payment.json`:
 
 ```json
 {
@@ -95,7 +95,7 @@ Potongan dari `ast/payment.json`:
 
 ## Rules Artifact
 
-Potongan dari `rules/payment.json`:
+Excerpt from `rules/payment.json`:
 
 ```json
 {
@@ -124,7 +124,7 @@ Potongan dari `rules/payment.json`:
 
 ## Graph Artifact
 
-Potongan dari `graphs/call_graph.json`:
+Excerpt from `graphs/call_graph.json`:
 
 ```json
 {
@@ -145,9 +145,9 @@ Potongan dari `graphs/call_graph.json`:
 
 ## Why This Matters
 
-Output model ini sengaja dibuat stabil dan versioned supaya:
+This output model is deliberately stable and versioned so that:
 
-- hasil analisis bisa dikonsumsi ulang tanpa rerun parser
-- GUI atau API nanti cukup membaca artifact yang sama
-- regression tests bisa menjaga perubahan parser tetap aman
-- layer LLM nanti punya input yang traceable dan bisa diaudit
+- analysis results can be re-consumed without rerunning the parser
+- a GUI or API can later read the same artifacts
+- regression tests can ensure parser changes remain safe
+- the LLM layer gets traceable and auditable input

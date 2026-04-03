@@ -1,139 +1,139 @@
 # Suite Vision
 
-Dokumen ini menjelaskan arah jangka panjang project sebagai fondasi untuk
-finance open-source suite, tanpa memperlebar scope MVP saat ini.
+This document describes the long-term direction of the project as a foundation
+for a finance open-source suite, without expanding the current MVP scope.
 
-Tujuan dokumen ini bukan menambah fitur baru sekarang, tetapi memastikan bahwa
-keputusan teknis di modul pertama tidak tanpa sengaja mengunci arsitektur hanya
-untuk use case COBOL.
+The purpose of this document is not to add new features now, but to ensure that
+technical decisions in the first module do not inadvertently lock the architecture
+to COBOL-only use cases.
 
 ---
 
 ## Long-Term Direction
 
-Target jangka panjangnya adalah membangun kumpulan modul open-source untuk
-kebutuhan finance yang memiliki pola kerja serupa:
+The long-term target is to build a collection of open-source modules for
+finance needs that share a similar workflow pattern:
 
-- menerima input yang cukup terstruktur
-- melakukan analisis programatik dan/atau LLM-assisted
-- menghasilkan artifact yang dapat divalidasi, ditrace, dan diintegrasikan
+- accept reasonably structured input
+- perform programmatic and/or LLM-assisted analysis
+- produce artifacts that can be validated, traced, and integrated
 
-Modul pertama adalah `cobol-intel`.
+The first module is `cobol-intel`.
 
-Naming kerja yang dipakai saat ini:
+Current working names:
 
-- repo publik: `cobol-intel`
+- public repo: `cobol-intel`
 - command line: `cobol-intel`
 - Python package: `cobol_intel`
 
-Artinya, walaupun ada visi suite jangka panjang, identitas project yang
-dipublikasikan sekarang tetap konsisten sebagai `cobol-intel`.
+This means that even though there is a long-term suite vision, the published
+project identity stays consistent as `cobol-intel`.
 
-Jika arsitekturnya terbukti sehat di modul ini, pola yang sama dapat dipakai
-ulang untuk modul lain seperti:
+If the architecture proves sound in this module, the same pattern can be reused
+for other modules such as:
 
 - `regtech`
 - `doc-intel`
 - `aml-assist`
 - `reconcile`
 
-Daftar ini masih ilustratif, bukan komitmen roadmap.
+This list is still illustrative, not a roadmap commitment.
 
 ---
 
-## Shared Layer Yang Disepakati Sekarang
+## Shared Layer Agreed Upon Now
 
-Untuk tahap saat ini, shared layer sengaja dibatasi agar tidak over-designed.
-Yang boleh dianggap reusable lintas modul hanya lima hal berikut:
+For the current stage, the shared layer is deliberately limited to avoid
+over-designing. Only the following five things may be considered reusable
+across modules:
 
-1. Artifact metadata dan manifest pattern
-2. Run lifecycle dan status execution
+1. Artifact metadata and manifest pattern
+2. Run lifecycle and execution status
 3. Source reference model
 4. LLM backend abstraction
 5. Output formatter conventions
 
-Penjelasan singkat:
+Brief explanation:
 
-- **Artifact metadata dan manifest pattern**
-  Semua modul nanti sebaiknya menghasilkan output dengan pola manifest yang
-  konsisten, termasuk `schema_version`, `run_id`, status, artifact list,
-  warning, dan error.
+- **Artifact metadata and manifest pattern**
+  All future modules should produce output with a consistent manifest pattern,
+  including `schema_version`, `run_id`, status, artifact list, warnings, and errors.
 
-- **Run lifecycle dan status execution**
-  Lifecycle dasar seperti `queued -> running -> completed/failed` sebaiknya
-  konsisten di semua modul.
+- **Run lifecycle and execution status**
+  The basic lifecycle such as `queued -> running -> completed/failed` should be
+  consistent across all modules.
 
 - **Source reference model**
-  Semua temuan atau penjelasan sebaiknya bisa menunjuk kembali ke sumbernya,
-  baik itu file COBOL, dokumen, aturan regulasi, maupun dataset transaksi.
+  All findings or explanations should be able to point back to their source,
+  whether it is a COBOL file, document, regulatory rule, or transaction dataset.
 
 - **LLM backend abstraction**
-  Integrasi model harus tetap pluggable dan tidak mengubah pipeline inti.
+  Model integration must remain pluggable and must not change the core pipeline.
 
 - **Output formatter conventions**
-  Format seperti JSON, Markdown, HTML, dan Mermaid sebaiknya mengikuti pola
-  yang seragam antar modul.
+  Formats like JSON, Markdown, HTML, and Mermaid should follow a uniform pattern
+  across modules.
 
 ---
 
-## Yang Belum Diputuskan
+## Not Yet Decided
 
-Hal-hal berikut sengaja belum diputuskan sekarang:
+The following items are deliberately left undecided for now:
 
-- nama suite final
-- namespace suite final di atas `cobol-intel`
-- monorepo layout final tingkat suite
-- apakah shared code nanti dipisah ke package khusus
-- shared finance domain types seperti `Money`, `DateRange`, dan sejenisnya
-- modul kedua setelah `cobol-intel`
+- final suite name
+- final suite namespace above `cobol-intel`
+- final suite-level monorepo layout
+- whether shared code will be separated into a dedicated package
+- shared finance domain types like `Money`, `DateRange`, and similar
+- the second module after `cobol-intel`
 
-Alasan penundaan:
+Reasons for deferral:
 
-- kebutuhan shared layer baru akan lebih jelas setelah satu modul benar-benar berjalan
-- terlalu cepat mengunci abstraksi suite bisa menghasilkan desain yang rapi di atas kertas
-  tetapi tidak dipakai nyata
+- shared layer needs will become clearer after one module is actually running
+- locking suite abstractions too early can produce a design that looks clean on paper
+  but is not used in practice
 
 ---
 
 ## Decision Timing
 
-Waktu pengambilan keputusan yang disarankan:
+Recommended decision timing:
 
-- **Sekarang**
-  Sepakati bahwa project ini harus tetap `suite-friendly`, tetapi tetap fokus
-  pada `cobol-intel` sebagai modul pertama.
+- **Now**
+  Agree that this project should remain `suite-friendly`, but stay focused
+  on `cobol-intel` as the first module.
 
-- **Setelah `cobol-intel` selesai Fase 0**
-  Review apakah contracts, artifact model, dan service boundary sudah cukup
-  reusable atau masih terlalu COBOL-specific.
+- **After `cobol-intel` completes Phase 0**
+  Review whether contracts, artifact model, and service boundaries are sufficiently
+  reusable or still too COBOL-specific.
 
-- **Setelah `cobol-intel` selesai Fase 1**
-  Baru putuskan:
-  - nama suite
-  - namespace package jangka panjang
-  - strategi repo: tetap satu repo atau diubah menjadi monorepo formal
-  - shared layer mana yang benar-benar dipromosikan jadi reusable package
+- **After `cobol-intel` completes Phase 1**
+  Then decide:
+  - suite name
+  - long-term package namespace
+  - repo strategy: stay single repo or convert to formal monorepo
+  - which shared layers are actually promoted to reusable packages
 
 ---
 
 ## Explicit Constraints
 
-Constraint ini berlaku agar visi suite tidak merusak fokus MVP:
+These constraints apply so that the suite vision does not derail MVP focus:
 
-- Tidak membuat modul baru sebelum `cobol-intel` menyelesaikan minimal Fase 1.
-- Tidak menambah abstraksi shared layer baru tanpa minimal dua use case nyata.
-- Tidak mengorbankan kejelasan arsitektur `cobol-intel` hanya demi hipotesis suite.
-- Tidak membangun platform besar terlebih dahulu sebelum engine pertama terbukti berguna.
+- Do not create new modules before `cobol-intel` completes at least Phase 1.
+- Do not add new shared layer abstractions without at least two real use cases.
+- Do not sacrifice `cobol-intel` architecture clarity just for suite hypotheses.
+- Do not build a large platform before the first engine is proven useful.
 
 ---
 
 ## Working Principle
 
-Prinsip kerja untuk beberapa bulan pertama:
+Working principle for the first few months:
 
-- bangun `cobol-intel` seolah-olah ini modul pertama dari suite
-- evaluasi shared concern secara disiplin
-- generalisasi hanya yang benar-benar terbukti reusable
+- build `cobol-intel` as if it is the first module of a suite
+- evaluate shared concerns with discipline
+- generalize only what is genuinely proven reusable
 
-Dengan pendekatan ini, project tetap fokus sebagai MVP yang bisa selesai, tetapi
-tidak menutup jalan untuk tumbuh menjadi finance open-source suite di masa depan.
+With this approach, the project stays focused as an MVP that can be completed, while
+not closing the door to growing into a finance open-source suite in the future.

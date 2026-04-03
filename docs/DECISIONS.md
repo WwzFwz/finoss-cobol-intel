@@ -1,53 +1,53 @@
 # Architecture Decision Records (ADR)
 
-Setiap keputusan teknis penting dicatat di sini beserta alasannya.
-Ini penting untuk project besar supaya tidak lupa kenapa sesuatu dibuat seperti itu.
+Every important technical decision is documented here along with its rationale.
+This is important for large projects so that the reasoning behind each choice is not forgotten.
 
-Format setiap entry:
+Format for each entry:
 
 - **Status**: Proposed / Accepted / Deprecated
-- **Context**: Situasi yang memaksa keputusan ini
-- **Decision**: Apa yang diputuskan
-- **Consequences**: Dampak positif dan negatifnya
+- **Context**: The situation that necessitated this decision
+- **Decision**: What was decided
+- **Consequences**: Positive and negative impacts
 
 ---
 
-## ADR-001: Python Sebagai Primary Language
+## ADR-001: Python as the Primary Language
 
 **Status**: Accepted
 
-**Context**: Perlu memilih bahasa untuk membangun seluruh pipeline.
+**Context**: A language needed to be chosen for building the entire pipeline.
 
 **Decision**: Python 3.11+
 
 **Consequences**:
 
-- (+) Ekosistem terlengkap untuk LLM integration
-- (+) `lark`, `antlr4-python3-runtime`, dan tooling data mudah dipakai
-- (+) Familiar di komunitas data science / ML
-- (+) Mudah untuk packaging dan distribusi
-- (-) Lebih lambat dari Go/Rust untuk parsing intensif
-- (-) GIL bisa jadi bottleneck untuk parallelism tertentu
+- (+) The most complete ecosystem for LLM integration
+- (+) `lark`, `antlr4-python3-runtime`, and data tooling are easy to use
+- (+) Familiar to the data science / ML community
+- (+) Easy to package and distribute
+- (-) Slower than Go/Rust for intensive parsing
+- (-) The GIL can become a bottleneck for certain parallelism scenarios
 
 ---
 
-## ADR-002: Static Analysis Sebelum LLM
+## ADR-002: Static Analysis Before LLM
 
 **Status**: Accepted
 
-**Context**: Secara teknis bisa saja langsung mengirim COBOL ke LLM dan meminta penjelasan.
+**Context**: Technically, it is possible to send COBOL directly to an LLM and request an explanation.
 
-**Decision**: Selalu jalankan static analysis pipeline dulu, baru LLM menerima
-output yang sudah terstruktur.
+**Decision**: Always run the static analysis pipeline first, then let the LLM receive
+structured output.
 
 **Consequences**:
 
-- (+) LLM mendapat input yang lebih bersih
-- (+) Akurasi penjelasan dan ekstraksi rule lebih tinggi
-- (+) Hemat token karena tidak mengirim seluruh raw COBOL
-- (+) Pipeline tetap berguna walaupun backend LLM tidak tersedia
-- (-) Arsitektur lebih kompleks
-- (-) Parser harus cukup robust untuk berbagai dialect COBOL
+- (+) The LLM receives cleaner input
+- (+) Higher accuracy in explanations and rule extraction
+- (+) Saves tokens by not sending the entire raw COBOL
+- (+) The pipeline remains useful even when the LLM backend is unavailable
+- (-) More complex architecture
+- (-) The parser must be robust enough for various COBOL dialects
 
 ---
 
@@ -55,12 +55,12 @@ output yang sudah terstruktur.
 
 **Status**: Accepted
 
-**Context**: Pengguna enterprise sering tidak bisa mengirim source code ke cloud,
-sementara developer individual ingin setup yang cepat.
+**Context**: Enterprise users often cannot send source code to the cloud,
+while individual developers want a quick setup.
 
-**Decision**: Gunakan abstraksi backend LLM yang pluggable.
+**Decision**: Use a pluggable LLM backend abstraction.
 
-Implementasi target:
+Target implementations:
 
 - OpenAI API
 - Claude API
@@ -69,11 +69,11 @@ Implementasi target:
 
 **Consequences**:
 
-- (+) Bank bisa pakai fully on-premise dengan local model
-- (+) Developer bisa pakai API untuk iterasi cepat
-- (+) Fine-tuned model bisa ditambahkan nanti
-- (-) Perlu maintain beberapa backend implementation
-- (-) Testing jadi lebih kompleks
+- (+) Banks can use a fully on-premise setup with a local model
+- (+) Developers can use an API for rapid iteration
+- (+) Fine-tuned models can be added later
+- (-) Multiple backend implementations need to be maintained
+- (-) Testing becomes more complex
 
 ---
 
@@ -81,98 +81,98 @@ Implementasi target:
 
 **Status**: Accepted
 
-**Context**: Web UI memang lebih menarik untuk demo, tetapi terlalu cepat
-membangunnya berisiko mendorong arsitektur yang belum matang.
+**Context**: A web UI is more appealing for demos, but building it too early
+risks driving an architecture that is not yet mature.
 
-**Decision**: Fokus ke CLI dan artifact output lebih dulu. GUI datang belakangan
-setelah service layer dan output contract stabil.
+**Decision**: Focus on CLI and artifact output first. The GUI comes later
+after the service layer and output contract are stable.
 
 **Consequences**:
 
-- (+) Value lebih cepat untuk developer
-- (+) Lebih mudah diintegrasikan ke script dan CI/CD
-- (+) Lebih mudah diuji
-- (+) GUI nanti punya fondasi yang lebih stabil
-- (-) Demo awal kurang visual untuk non-technical audience
-- Mitigasi: hasil HTML report dan Mermaid bisa dipakai untuk demo awal
+- (+) Faster value delivery for developers
+- (+) Easier to integrate into scripts and CI/CD
+- (+) Easier to test
+- (+) The GUI will have a more stable foundation later
+- (-) Early demos are less visual for a non-technical audience
+- Mitigation: HTML reports and Mermaid diagrams can be used for early demos
 
 ---
 
-## ADR-005: Output Format Utama
+## ADR-005: Primary Output Formats
 
 **Status**: Accepted
 
-**Context**: Perlu format output yang berguna untuk berbagai use case.
+**Context**: An output format is needed that serves various use cases.
 
 **Decision**:
 
-- **JSON** untuk integrasi programatik dan regression testing
-- **Markdown** untuk dokumentasi yang bisa dirender di GitHub atau wiki
-- **HTML** untuk report stakeholder non-teknis
-- **Mermaid** untuk diagram yang bisa di-embed di Markdown
+- **JSON** for programmatic integration and regression testing
+- **Markdown** for documentation that can be rendered on GitHub or a wiki
+- **HTML** for reports targeting non-technical stakeholders
+- **Mermaid** for diagrams that can be embedded in Markdown
 
 **Consequences**:
 
-- (+) Fleksibel untuk banyak kebutuhan
-- (+) JSON menjadi base contract lintas interface
-- (+) Markdown bisa langsung dipush ke repo sebagai docs
-- (-) Perlu generator untuk beberapa format output
+- (+) Flexible for many needs
+- (+) JSON serves as the base contract across interfaces
+- (+) Markdown can be pushed directly to a repo as docs
+- (-) Generators are needed for multiple output formats
 
 ---
 
-## ADR-006: Parser Default — ANTLR4
+## ADR-006: Default Parser — ANTLR4
 
 **Status**: Accepted (2026-03-31)
 
-**Context**: Parser adalah fondasi project, tetapi memilih parser hanya dari
-preferensi library terlalu berisiko. Fase 0 membuat PoC menggunakan `lark`
-(Earley) dan `ANTLR4` pada 5 sample COBOL nyata (fixed-format, free-format,
+**Context**: The parser is the project's foundation, but choosing a parser based
+solely on library preference is too risky. Phase 0 built a PoC using `lark`
+(Earley) and `ANTLR4` on 5 real COBOL samples (fixed-format, free-format,
 COPY, COMP-3, REDEFINES, OCCURS, CALL, EVALUATE, PERFORM VARYING, array access).
 
-Kedua parser berhasil parse semua 5 sample — 32/32 test lark, 27/27 test ANTLR4.
+Both parsers successfully parsed all 5 samples — 32/32 tests for lark, 27/27 tests for ANTLR4.
 
-**Decision**: **ANTLR4 sebagai parser default.** Lark tetap tersedia sebagai
-fallback dan untuk quick prototyping.
+**Decision**: **ANTLR4 as the default parser.** Lark remains available as a
+fallback and for quick prototyping.
 
-Alasan utama:
+Key reasons:
 
-1. Keyword/identifier priority diselesaikan secara natural oleh lexer rule
-   ordering — tidak perlu workaround priority annotations seperti di lark
-2. Community COBOL85 grammar tersedia di `antlr/grammars-v4` sebagai upgrade path
-3. Strongly-typed visitor pattern lebih maintainable untuk project besar
-4. Tooling dan debugging ecosystem lebih mature
+1. Keyword/identifier priority is resolved naturally by lexer rule
+   ordering — no need for priority annotation workarounds as in lark
+2. A community COBOL85 grammar is available at `antlr/grammars-v4` as an upgrade path
+3. The strongly-typed visitor pattern is more maintainable for large projects
+4. The tooling and debugging ecosystem is more mature
 
-Mitigasi risiko Java dependency:
+Mitigation for the Java dependency risk:
 
-- Generated Python files di-commit ke repo
-- Contributor hanya butuh Java kalau mengubah grammar
-- End user tidak perlu Java sama sekali
+- Generated Python files are committed to the repo
+- Contributors only need Java when modifying the grammar
+- End users do not need Java at all
 
-Evaluasi lengkap: `docs/PARSER_EVALUATION.md`
+Full evaluation: `docs/PARSER_EVALUATION.md`
 
 **Consequences**:
 
-- (+) Keputusan parser berbasis bukti dari PoC nyata, bukan tebakan
-- (+) Natural keyword priority tanpa manual annotations
-- (+) Community grammar COBOL85 tersedia untuk scaling ke dialect nyata
-- (+) Strongly-typed context objects dan visitor pattern
-- (+) Lark tetap tersedia sebagai fallback
-- (-) Butuh Java untuk regenerate parser saat grammar berubah
-- (-) Generated code (~3000 baris) harus di-commit ke repo
+- (+) Parser decision is evidence-based from a real PoC, not guesswork
+- (+) Natural keyword priority without manual annotations
+- (+) Community COBOL85 grammar available for scaling to real dialects
+- (+) Strongly-typed context objects and visitor pattern
+- (+) Lark remains available as a fallback
+- (-) Java is required to regenerate the parser when the grammar changes
+- (-) Generated code (~3000 lines) must be committed to the repo
 
 ---
 
-## ADR-007: Versioned Contracts Untuk Semua Artifact JSON
+## ADR-007: Versioned Contracts for All JSON Artifacts
 
 **Status**: Accepted
 
-**Context**: Tanpa output contract yang stabil, CLI, API, GUI, dan integrasi
-eksternal akan mudah rusak saat shape JSON berubah.
+**Context**: Without stable output contracts, the CLI, API, GUI, and external
+integrations will easily break when the JSON shape changes.
 
-**Decision**: Semua artifact JSON harus didefinisikan di `contracts/` dan wajib
-memiliki `schema_version`.
+**Decision**: All JSON artifacts must be defined in `contracts/` and must
+include a `schema_version`.
 
-Artifact minimal untuk MVP:
+Minimum artifacts for MVP:
 
 - `manifest.json`
 - AST output
@@ -181,24 +181,24 @@ Artifact minimal untuk MVP:
 
 **Consequences**:
 
-- (+) Integrasi lebih aman
-- (+) Contract test bisa ditulis sejak awal
-- (+) API dan GUI nanti punya bahasa bersama
-- (-) Perubahan output menjadi lebih disiplin dan sedikit lebih lambat
+- (+) Safer integrations
+- (+) Contract tests can be written from the start
+- (+) The API and GUI will share a common language later
+- (-) Output changes become more disciplined and slightly slower
 
 ---
 
-## ADR-008: File-System Artifact Store Sebelum Database Persistence
+## ADR-008: File-System Artifact Store Before Database Persistence
 
 **Status**: Accepted
 
-**Context**: Project butuh model run dan artifact yang rapi, tetapi persistence
-enterprise penuh masih premature untuk MVP.
+**Context**: The project needs a clean model for runs and artifacts, but full
+enterprise persistence is premature for the MVP.
 
-**Decision**: Simpan hasil analisis dalam artifact directory yang stabil di
-filesystem. Jangan bangun database persistence penuh di fase awal.
+**Decision**: Store analysis results in a stable artifact directory on the
+filesystem. Do not build full database persistence in the early phase.
 
-Contoh layout:
+Example layout:
 
 ```text
 artifacts/<project_slug>/<run_id>/
@@ -206,21 +206,21 @@ artifacts/<project_slug>/<run_id>/
 
 **Consequences**:
 
-- (+) Sederhana untuk MVP
-- (+) Mudah diinspeksi manual
-- (+) Nanti bisa dipetakan ke object storage atau DB
-- (-) Belum optimal untuk multi-user dan query kompleks
+- (+) Simple for the MVP
+- (+) Easy to inspect manually
+- (+) Can be mapped to object storage or a DB later
+- (-) Not yet optimal for multi-user and complex queries
 
 ---
 
-## ADR-009: Package Boundaries Harus Dikunci Sebelum Coding
+## ADR-009: Package Boundaries Must Be Locked Before Coding
 
 **Status**: Accepted
 
-**Context**: Tanpa boundary yang jelas, CLI, parser, formatter, dan LLM layer
-akan mudah saling menempel dan sulit direfactor saat API atau GUI ditambahkan.
+**Context**: Without clear boundaries, the CLI, parser, formatter, and LLM layer
+will easily become coupled and difficult to refactor when an API or GUI is added.
 
-**Decision**: Kunci package layout berikut sejak awal:
+**Decision**: Lock the following package layout from the start:
 
 ```text
 src/cobol_intel/
@@ -236,89 +236,89 @@ src/cobol_intel/
 
 Rules:
 
-- `cli` tidak menyimpan business logic
-- `analysis` tidak bergantung pada backend LLM
-- `contracts` menjadi bahasa bersama lintas layer
-- interface baru nanti masuk lewat `service`
+- `cli` does not hold business logic
+- `analysis` does not depend on the LLM backend
+- `contracts` serves as the shared language across layers
+- new interfaces are added later through `service`
 
 **Consequences**:
 
-- (+) Refactor di masa depan lebih murah
-- (+) GUI dan API nanti lebih mudah ditambahkan
-- (+) Testing bisa difokuskan per layer
-- (-) Perlu disiplin boundary sejak awal
+- (+) Future refactoring is cheaper
+- (+) A GUI and API are easier to add later
+- (+) Testing can be focused per layer
+- (-) Boundary discipline is required from the start
 
 ---
 
-## ADR-010: Testing Strategy Harus Berbasis Corpus, Contract, Dan Regression
+## ADR-010: Testing Strategy Must Be Based on Corpus, Contract, and Regression
 
 **Status**: Accepted
 
-**Context**: Menulis "akan ada benchmark dan test suite" terlalu vague untuk
-project parser-heavy seperti ini.
+**Context**: Writing "there will be benchmarks and a test suite" is too vague for
+a parser-heavy project like this.
 
-**Decision**: Testing dibagi menjadi empat lapisan:
+**Decision**: Testing is divided into four layers:
 
-1. corpus tests untuk parser dan dialect coverage
-2. contract tests untuk JSON schema
-3. regression tests untuk expected artifact
-4. evaluation tests untuk membandingkan raw LLM vs preprocessing pipeline
+1. corpus tests for parser and dialect coverage
+2. contract tests for JSON schema
+3. regression tests for expected artifacts
+4. evaluation tests for comparing raw LLM vs. the preprocessing pipeline
 
 **Consequences**:
 
-- (+) Risiko regression parser lebih cepat terdeteksi
-- (+) Output contract tetap stabil
-- (+) LLM dibuktikan sebagai enhancer, bukan fondasi tunggal
-- (-) Butuh effort dataset dan maintenance fixture
+- (+) Parser regression risks are detected faster
+- (+) Output contracts remain stable
+- (+) The LLM is proven to be an enhancer, not the sole foundation
+- (-) Dataset effort and fixture maintenance are required
 
 ---
 
-## ADR-011: API Ditunda Sampai Service Layer Dan Contract Stabil
+## ADR-011: API Deferred Until the Service Layer and Contracts Are Stable
 
 **Status**: Accepted
 
-**Context**: Ada kebutuhan integrasi ke sistem lain, tetapi membangun API terlalu
-cepat bisa menghasilkan endpoint yang langsung obsolete setelah contract berubah.
+**Context**: There is a need for integration with other systems, but building an API
+too early could result in endpoints that become obsolete as soon as contracts change.
 
-**Decision**: API bukan prioritas fase awal. Tambahkan read-only API prototype
-setelah service layer dan artifact contract stabil.
+**Decision**: The API is not a priority in the early phase. Add a read-only API
+prototype after the service layer and artifact contracts are stable.
 
 **Consequences**:
 
-- (+) Backend tidak dikunci terlalu cepat oleh desain API
-- (+) Kontrak lebih matang saat API diperkenalkan
-- (+) GUI nanti bisa dibangun di atas interface yang lebih sehat
-- (-) Integrasi via HTTP belum tersedia di MVP paling awal
+- (+) The backend is not locked in too early by API design
+- (+) Contracts are more mature when the API is introduced
+- (+) The GUI can later be built on top of a healthier interface
+- (-) HTTP-based integration is not available in the earliest MVP
 
 ---
 
-## ADR-013: Error Handling Strategy — Partial Artifact Dengan Warnings
+## ADR-013: Error Handling Strategy — Partial Artifacts with Warnings
 
 **Status**: Accepted
 
-**Context**: COBOL codebase di bank nyata tidak pernah 100% bersih. Selalu ada
-file dengan dialect tidak standar, COPYBOOK yang hilang, atau syntax edge case
-yang tidak di-handle parser. Belum ada keputusan eksplisit tentang apa yang
-terjadi saat pipeline gagal di sebagian file.
+**Context**: COBOL codebases in real banks are never 100% clean. There are always
+files with non-standard dialects, missing COPYBOOKs, or syntax edge cases
+that the parser does not handle. There is no explicit decision yet on what
+happens when the pipeline fails on some files.
 
-Tanpa keputusan ini, implementer akan membuat pilihan secara tidak sadar dan
-hasilnya tidak konsisten antar modul.
+Without this decision, implementers will make choices unconsciously and the
+results will be inconsistent across modules.
 
-**Decision**: Pipeline menggunakan strategi **partial artifact dengan warnings**,
-bukan fail-fast.
+**Decision**: The pipeline uses a **partial artifact with warnings** strategy,
+not fail-fast.
 
-Aturannya:
+Rules:
 
-- Jika satu file gagal di-parse, file itu dicatat di `manifest.json` bagian
-  `errors`, pipeline tetap lanjut ke file berikutnya.
-- Artifact yang berhasil tetap ditulis ke filesystem.
-- `manifest.json` mendapat status `partially_completed` jika ada error, bukan
-  `completed`.
-- Jika **semua** file gagal, status menjadi `failed`.
-- Setiap error harus menyertakan: file path, modul yang gagal, pesan error,
-  dan jika bisa — baris yang bermasalah.
+- If a single file fails to parse, that file is recorded in the `errors` section
+  of `manifest.json`, and the pipeline continues to the next file.
+- Successfully produced artifacts are still written to the filesystem.
+- `manifest.json` receives a status of `partially_completed` if there are errors,
+  not `completed`.
+- If **all** files fail, the status becomes `failed`.
+- Every error must include: file path, the module that failed, the error message,
+  and if possible — the problematic line.
 
-Contoh manifest dengan partial failure:
+Example manifest with partial failure:
 
 ```json
 {
@@ -329,49 +329,49 @@ Contoh manifest dengan partial failure:
     "ast": ["ast/CALCINT.json", "ast/PAYREC.json"]
   },
   "warnings": [
-    "COPYBOOK 'CUSTMAST' tidak ditemukan, field dari COPYBOOK ini tidak di-resolve"
+    "COPYBOOK 'CUSTMAST' not found, fields from this COPYBOOK were not resolved"
   ],
   "errors": [
     {
       "file": "LEGACY01.cbl",
       "module": "parser",
-      "message": "Unexpected token di baris 342: EXEC CICS — dialect CICS belum didukung",
+      "message": "Unexpected token at line 342: EXEC CICS — CICS dialect is not yet supported",
       "line": 342
     }
   ]
 }
 ```
 
-**Fail-fast hanya berlaku** untuk kondisi yang menunjukkan setup yang salah,
-bukan konten COBOL yang bermasalah. Contoh: direktori input tidak ada, backend
-LLM tidak bisa dihubungi dan mode LLM wajib diaktifkan.
+**Fail-fast only applies** to conditions that indicate an incorrect setup,
+not problematic COBOL content. Examples: the input directory does not exist, the
+LLM backend cannot be reached and LLM mode is required to be enabled.
 
 **Consequences**:
 
-- (+) Tool tetap berguna walaupun sebagian file tidak bisa diproses
-- (+) User tahu persis file mana yang bermasalah dan kenapa
-- (+) Partial artifact tetap bisa dipakai untuk file yang berhasil
-- (+) Konsisten antar modul — semua ikut aturan yang sama
-- (-) Implementasi lebih kompleks dari sekadar raise exception
-- (-) User perlu selalu cek `manifest.json` dan tidak bisa asumsikan run = sukses
+- (+) The tool remains useful even when some files cannot be processed
+- (+) Users know exactly which files are problematic and why
+- (+) Partial artifacts can still be used for the files that succeeded
+- (+) Consistent across modules — all follow the same rules
+- (-) Implementation is more complex than simply raising an exception
+- (-) Users must always check `manifest.json` and cannot assume a run equals success
 
 ---
 
-## ADR-012: Enterprise Auth Dan RBAC Bukan Scope MVP
+## ADR-012: Enterprise Auth and RBAC Are Not in MVP Scope
 
 **Status**: Accepted
 
-**Context**: Auth, RBAC, dan audit platform memang penting untuk enterprise,
-tetapi belum perlu dibangun pada fase open-source MVP.
+**Context**: Auth, RBAC, and platform auditing are important for enterprise use,
+but do not need to be built during the open-source MVP phase.
 
-**Decision**: Fitur-fitur tersebut ditunda. Arsitektur hanya perlu memastikan
-bahwa penambahannya nanti tidak terhalang.
+**Decision**: These features are deferred. The architecture only needs to ensure
+that adding them later is not blocked.
 
 **Consequences**:
 
-- (+) Fokus tim tetap pada parser, contracts, dan pipeline inti
-- (+) MVP lebih cepat selesai
-- (-) Belum siap langsung menjadi multi-user enterprise platform
+- (+) Team focus remains on the parser, contracts, and core pipeline
+- (+) The MVP is completed faster
+- (-) Not yet ready to serve as a multi-user enterprise platform
 
 ---
 
@@ -379,23 +379,23 @@ bahwa penambahannya nanti tidak terhalang.
 
 **Status**: Accepted (2026-03-31)
 
-**Context**: Artifact directory layout menggunakan `run_id` sebagai nama folder
-(`artifacts/<project>/<run_id>/`). Format belum diputuskan — opsi utama adalah
-UUID v4 atau timestamp-based.
+**Context**: The artifact directory layout uses `run_id` as the folder name
+(`artifacts/<project>/<run_id>/`). The format has not been decided — the main
+options are UUID v4 or timestamp-based.
 
-**Decision**: Format `run_YYYYMMDD_HHMMSS_XXXX` dimana:
+**Decision**: Format `run_YYYYMMDD_HHMMSS_XXXX` where:
 
-- Timestamp dalam UTC
-- `XXXX` adalah 4-char hex random suffix untuk uniqueness dalam detik yang sama
+- Timestamp is in UTC
+- `XXXX` is a 4-char hex random suffix for uniqueness within the same second
 
-Contoh: `run_20260331_143052_a7f3`
+Example: `run_20260331_143052_a7f3`
 
 **Consequences**:
 
-- (+) Human-readable — mudah diinspeksi di filesystem dan log
-- (+) Sortable secara natural (ls, sort)
-- (+) Cukup unique untuk single-user CLI tool
-- (-) Tidak cocok untuk distributed system multi-node (tapi itu bukan scope MVP)
-- (-) Tidak sependek UUID v4 untuk embedding di URL nanti
+- (+) Human-readable — easy to inspect in the filesystem and logs
+- (+) Naturally sortable (ls, sort)
+- (+) Unique enough for a single-user CLI tool
+- (-) Not suitable for distributed multi-node systems (but that is not in MVP scope)
+- (-) Not as short as UUID v4 for embedding in URLs later
 
-Implementasi: `src/cobol_intel/contracts/run_id.py`
+Implementation: `src/cobol_intel/contracts/run_id.py`

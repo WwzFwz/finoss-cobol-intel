@@ -1,41 +1,41 @@
 # Architecture Deep Dive
 
-Dokumen ini menjelaskan keputusan arsitektur dan alasan di baliknya.
-Fokus utamanya adalah membuat MVP yang benar-benar bisa dibangun, diuji, dan
-diintegrasikan, tanpa terlalu cepat masuk ke kompleksitas enterprise penuh.
+This document explains the architectural decisions and the reasoning behind them.
+The main focus is to build an MVP that can actually be built, tested, and
+integrated, without jumping too quickly into full enterprise complexity.
 
 ---
 
 ## Architecture Priorities
 
-Prioritas arsitektur untuk fase awal:
+Architecture priorities for the initial phase:
 
-1. Parser dan static analysis harus cukup kuat untuk sample COBOL nyata.
-2. Output harus punya contract yang stabil dan versioned.
-3. Core pipeline harus berguna walaupun LLM dimatikan.
-4. CLI, API, dan GUI nanti harus berbagi fondasi yang sama melalui service dan contracts.
+1. The parser and static analysis must be robust enough for real COBOL samples.
+2. Output must have a stable and versioned contract.
+3. The core pipeline must be useful even when the LLM is turned off.
+4. CLI, API, and GUI should eventually share the same foundation through services and contracts.
 
 ---
 
-## Kenapa Static Analysis Dulu, Bukan Langsung LLM
+## Why Static Analysis First, Not Jumping Straight to LLM
 
-LLM tanpa preprocessing pada COBOL memiliki masalah fundamental:
+LLM without preprocessing on COBOL has fundamental problems:
 
-| Masalah | Dampak | Solusi di project ini |
+| Problem | Impact | Solution in this project |
 |---|---|---|
-| COPYBOOK tidak resolved | LLM menebak isi struktur data | Resolver sebelum LLM |
-| CALL ke program lain tidak diketahui | Analisis tidak lengkap | Call graph builder |
-| Program sangat besar | Melebihi context window | Smart chunking dengan konteks |
-| COMP-3 / packed decimal | Sering salah interpretasi | Type-aware AST |
-| Variabel tidak deskriptif | LLM sulit infer arti | Enrichment dari context sekitar |
+| COPYBOOK not resolved | LLM guesses the contents of data structures | Resolver before LLM |
+| CALL to other programs unknown | Incomplete analysis | Call graph builder |
+| Very large programs | Exceeds context window | Smart chunking with context |
+| COMP-3 / packed decimal | Often misinterpreted | Type-aware AST |
+| Non-descriptive variables | LLM has difficulty inferring meaning | Enrichment from surrounding context |
 
-Kesimpulan: **LLM hanya digunakan setelah data sudah bersih dan terstruktur.**
+Conclusion: **LLM is only used after the data is clean and structured.**
 
 ---
 
 ## Package Boundaries
 
-Arsitektur package harus menjaga dependency flow tetap sehat:
+The package architecture must keep the dependency flow healthy:
 
 ```text
 contracts <- core <- service <- cli
@@ -44,40 +44,40 @@ llm       <- service
 outputs   <- service
 ```
 
-Penjelasan:
+Explanation:
 
-- `contracts` berisi schema, manifest, dan DTO yang menjadi bahasa bersama.
-- `core` berisi domain abstractions dan orchestration interfaces yang tidak
-  bergantung pada UI.
-- `parsers` dan `analysis` menghasilkan artifact inti yang bisa dipakai tanpa LLM.
-- `service` menggabungkan pipeline, run lifecycle, dan artifact writing.
-- `cli` hanyalah lapisan pemanggil.
+- `contracts` contains schemas, manifests, and DTOs that serve as the shared language.
+- `core` contains domain abstractions and orchestration interfaces that do not
+  depend on the UI.
+- `parsers` and `analysis` produce core artifacts that can be used without the LLM.
+- `service` combines the pipeline, run lifecycle, and artifact writing.
+- `cli` is merely the calling layer.
 
-Implikasi:
+Implications:
 
-- Jika nanti ada API atau GUI, keduanya harus masuk lewat `service`.
-- Jangan menaruh logic parsing, graph analysis, atau formatting langsung di CLI.
+- If an API or GUI is added later, both must go through `service`.
+- Do not place parsing logic, graph analysis, or formatting directly in the CLI.
 
 ---
 
 ## Canonical Output Contracts
 
-Project ini perlu punya output yang stabil sebelum menambah API atau GUI.
+This project needs to have stable output before adding an API or GUI.
 
-Minimal artifact contract yang harus ada:
+Minimum artifact contracts that must exist:
 
 - `manifest.json`
 - `ast/<program>.json`
 - `graphs/dependency_graph.json`
 - `rules/business_rules.json`
 
-Semua artifact JSON harus memiliki:
+All JSON artifacts must have:
 
 - `schema_version`
 - `tool_version`
 - `generated_at`
 
-Khusus `manifest.json`, minimal field-nya:
+For `manifest.json` specifically, the minimum fields are:
 
 ```json
 {
@@ -99,28 +99,28 @@ Khusus `manifest.json`, minimal field-nya:
 }
 ```
 
-Tujuan utama contract ini:
+The main purposes of this contract:
 
-- mudah di-parse sistem lain
-- bisa dipakai ulang tanpa rerun pipeline
-- aman untuk regression testing
-- menjadi fondasi API dan GUI nanti
+- easy for other systems to parse
+- can be reused without rerunning the pipeline
+- safe for regression testing
+- serves as the foundation for a future API and GUI
 
 ---
 
-## Run Lifecycle Dan Artifact Model
+## Run Lifecycle And Artifact Model
 
-Walaupun persistence penuh ke database ditunda, semua execution harus dianggap
-sebagai `analysis run` yang eksplisit.
+Although full database persistence is deferred, all executions must be treated
+as explicit `analysis run` instances.
 
-Lifecycle minimum:
+Minimum lifecycle:
 
 ```text
 queued -> running -> completed
 queued -> running -> failed
 ```
 
-Setiap run menulis artifact ke filesystem dengan struktur:
+Each run writes artifacts to the filesystem with this structure:
 
 ```text
 artifacts/
@@ -134,165 +134,165 @@ artifacts/
         `-- logs/
 ```
 
-Kenapa ini penting:
+Why this matters:
 
-- CLI bisa menampilkan hasil run terakhir
-- API nanti bisa membaca artifact yang sama
-- GUI nanti cukup browse manifest dan artifact, tidak perlu coupling langsung ke parser internals
-- Storage ini bisa dipindahkan ke object storage atau DB layer nanti tanpa mengubah semantic model
+- CLI can display the results of the latest run
+- A future API can read the same artifacts
+- A future GUI only needs to browse the manifest and artifacts, without direct coupling to parser internals
+- This storage can be migrated to object storage or a DB layer later without changing the semantic model
 
 ---
 
 ## Parser Strategy
 
-Parser adalah fondasi seluruh sistem, jadi keputusan parser tidak boleh diambil
-hanya berdasarkan preferensi library.
+The parser is the foundation of the entire system, so parser decisions should not
+be made based solely on library preference.
 
 ### Candidate A: Lark
 
-Kelebihan:
+Strengths:
 
 - Pure Python
-- Mudah diintegrasikan ke codebase
-- Fleksibel untuk grammar custom
+- Easy to integrate into the codebase
+- Flexible for custom grammars
 
-Risiko:
+Risks:
 
-- Grammar COBOL harus banyak ditulis sendiri
-- Bisa lambat atau rapuh untuk dialect yang kompleks
+- COBOL grammar must be largely written manually
+- Can be slow or fragile for complex dialects
 
 ### Candidate B: ANTLR4 COBOL Grammar
 
-Kelebihan:
+Strengths:
 
-- Ada grammar yang bisa dijadikan titik awal
-- Lebih realistis untuk validasi cepat terhadap COBOL nyata
+- There is an existing grammar that can serve as a starting point
+- More realistic for quick validation against real COBOL
 
-Risiko:
+Risks:
 
-- Tooling lebih berat
-- Grammar komunitas tetap perlu divalidasi dan diadaptasi
+- Heavier tooling
+- Community grammar still needs to be validated and adapted
 
 ### Decision Gate
 
-Fase 0 harus menjalankan PoC kecil pada minimal 3-4 sample COBOL nyata:
+Phase 0 must run a small PoC on at least 3-4 real COBOL samples:
 
-- fixed-format sederhana
-- free-format sederhana
-- sample dengan `COPY`
-- sample dengan `COMP-3`, `REDEFINES`, atau `CALL`
+- simple fixed-format
+- simple free-format
+- sample with `COPY`
+- sample with `COMP-3`, `REDEFINES`, or `CALL`
 
-Metrik evaluasi awal:
+Initial evaluation metrics:
 
 - parse success / fail
-- effort implementasi preprocessing
-- kualitas tree hasil parse untuk kebutuhan AST internal
-- kemudahan debugging saat gagal
+- preprocessing implementation effort
+- quality of the parse tree for internal AST needs
+- ease of debugging on failure
 
-Setelah itu baru parser default dikunci.
+Only after that is the default parser locked in.
 
 ---
 
 ## Known Dialect Gaps
 
-Coverage parser saat ini sudah cukup untuk MVP static analysis, tetapi belum
-berarti project ini sudah menangani semua dialek COBOL nyata di bank atau
-mainframe enterprise.
+Current parser coverage is sufficient for MVP static analysis, but that does not
+mean this project already handles all real COBOL dialects found in banks or
+enterprise mainframes.
 
-### Sudah Dicakup Di MVP
+### Already Covered In MVP
 
-- fixed-format dan free-format source
-- `IDENTIFICATION`, `ENVIRONMENT`, `DATA`, dan `PROCEDURE DIVISION`
-- `WORKING-STORAGE`, `FILE`, dan `LINKAGE SECTION`
-- `COPY`, circular `COPY` warning, dan `COPY ... REPLACING`
+- fixed-format and free-format source
+- `IDENTIFICATION`, `ENVIRONMENT`, `DATA`, and `PROCEDURE DIVISION`
+- `WORKING-STORAGE`, `FILE`, and `LINKAGE SECTION`
+- `COPY`, circular `COPY` warning, and `COPY ... REPLACING`
 - `PIC`, `COMP-3`, `REDEFINES`, `OCCURS`, level-88 conditions
 - `PROCEDURE DIVISION USING`
 - `IF`, `EVALUATE`, `PERFORM`, `PERFORM THRU`, `CALL`, `STRING`, `UNSTRING`, `INSPECT`,
   `GOBACK`, `STOP RUN`
 - file I/O statements: `OPEN`, `READ`, `WRITE`, `REWRITE`, `CLOSE`
-- `EXEC SQL` subset untuk static analysis context extraction
-- basic `EXEC CICS` block extraction untuk static analysis context
+- `EXEC SQL` subset for static analysis context extraction
+- basic `EXEC CICS` block extraction for static analysis context
 
-### Belum Dicakup Penuh
+### Not Yet Fully Covered
 
-- `EXEC SQL` yang lebih luas: multi-statement, host variable edge cases,
-  vendor-specific SQL embedding, dan statement selain subset saat ini
-- `EXEC CICS` yang lebih luas: transaction verbs, HANDLE CONDITION, dan
-  opsi yang lebih kompleks dari sekadar block extraction
-- `GO TO`, `ALTER`, dan control-flow legacy lain
-- `SEARCH`, `SEARCH ALL`, dan varian `UNSTRING` / `INSPECT` yang lebih kaya
+- Broader `EXEC SQL`: multi-statement, host variable edge cases,
+  vendor-specific SQL embedding, and statements beyond the current subset
+- Broader `EXEC CICS`: transaction verbs, HANDLE CONDITION, and
+  more complex options beyond basic block extraction
+- `GO TO`, `ALTER`, and other legacy control-flow constructs
+- `SEARCH`, `SEARCH ALL`, and richer variants of `UNSTRING` / `INSPECT`
 - `OCCURS DEPENDING ON`, `INDEXED BY`, `RENAMES`
-- vendor-specific syntax dari IBM Enterprise COBOL, Micro Focus, dan GnuCOBOL
+- vendor-specific syntax from IBM Enterprise COBOL, Micro Focus, and GnuCOBOL
 
-### Dialect Roadmap Yang Paling Bernilai
+### Most Valuable Dialect Roadmap
 
-Untuk codebase finance nyata, urutan prioritas yang paling masuk akal adalah:
+For real finance codebases, the most sensible priority order is:
 
-1. perluasan `EXEC SQL`
-2. perluasan `EXEC CICS`
+1. `EXEC SQL` expansion
+2. `EXEC CICS` expansion
 3. `SEARCH` / `SEARCH ALL`
-4. varian `UNSTRING` dan `INSPECT` yang lebih luas
-5. `GO TO` / control-flow legacy jika target Anda benar-benar mainframe-heavy
+4. broader `UNSTRING` and `INSPECT` variants
+5. `GO TO` / legacy control-flow if your target is truly mainframe-heavy
 
-Alasan prioritas ini:
+Reasoning behind this priority:
 
-- `EXEC SQL` sangat umum di sistem core banking dan batch processing yang
-  terhubung ke DB2 atau database lain, jadi perluasannya tetap punya ROI tinggi.
-- `EXEC CICS` dan `SEARCH` sering muncul di codebase legacy yang lebih tua
-  atau lebih dekat ke mainframe transaction processing.
-- varian `UNSTRING` / `INSPECT` yang lebih kaya penting untuk cleaning dan
-  parsing string pada batch processing finance.
-- `EXEC CICS` sangat penting di sebagian bank besar, tetapi tidak semua fintech
-  atau modernization use case membutuhkannya pada fase awal.
+- `EXEC SQL` is very common in core banking and batch processing systems
+  connected to DB2 or other databases, so expanding it still has high ROI.
+- `EXEC CICS` and `SEARCH` frequently appear in older legacy codebases
+  closer to mainframe transaction processing.
+- Richer `UNSTRING` / `INSPECT` variants are important for string cleaning and
+  parsing in finance batch processing.
+- `EXEC CICS` is very important at some large banks, but not all fintech
+  or modernization use cases require it in the early phase.
 
-Dengan kata lain, target terbaik berikutnya bukan "semua dialek", tetapi
-"enterprise-heavy subset yang paling sering muncul di finance workloads".
+In other words, the best next target is not "all dialects", but rather
+"the enterprise-heavy subset that most frequently appears in finance workloads".
 
 ---
 
 ## Smart Chunking Strategy
 
-Untuk program besar yang melebihi context window LLM:
+For large programs that exceed the LLM context window:
 
 ```text
-Program COBOL besar
+Large COBOL program
     |
     v
-Split per section atau paragraph boundary
+Split per section or paragraph boundary
     |
     v
-Tambahkan envelope per chunk:
-  - global data definitions yang relevan
-  - summary program secara keseluruhan
-  - paragraphs yang dipanggil atau memanggil chunk ini
+Add an envelope per chunk:
+  - relevant global data definitions
+  - overall program summary
+  - paragraphs that call or are called by this chunk
     |
     v
-LLM analisis per chunk dengan konteks cukup
+LLM analyzes each chunk with sufficient context
     |
     v
-Merge dan deduplicate hasil
+Merge and deduplicate results
 ```
 
-Prinsip penting:
+Key principles:
 
-- Chunking tidak boleh memotong statement secara sembarangan.
-- Chunking harus berbasis struktur program, bukan sekadar jumlah token.
+- Chunking must not arbitrarily cut statements.
+- Chunking must be based on program structure, not merely token count.
 
 ---
 
 ## Traceability
 
-Salah satu nilai jual utama project ini adalah hasil yang bisa ditelusuri balik
-ke source COBOL.
+One of the main selling points of this project is that results can be traced back
+to the COBOL source.
 
-Setiap business rule atau explanation idealnya mengandung:
+Every business rule or explanation should ideally contain:
 
-- file sumber
-- paragraph atau section sumber
-- range line sumber
-- artifact asal, misalnya AST node atau graph edge terkait
+- source file
+- source paragraph or section
+- source line range
+- originating artifact, such as the related AST node or graph edge
 
-Contoh bentuk rule:
+Example rule format:
 
 ```json
 {
@@ -308,18 +308,18 @@ Contoh bentuk rule:
     {"field": "WS-BALANCE", "operator": ">", "value": 10000}
   ],
   "action": "PERFORM APPLY-PREMIUM-RATE",
-  "description": "Premium rate berlaku untuk akun Savings dengan saldo tertentu."
+  "description": "Premium rate applies to Savings accounts with a certain balance."
 }
 ```
 
-Tanpa traceability, hasil LLM akan terlihat seperti demo. Dengan traceability,
-hasilnya lebih layak dipakai untuk dokumentasi, audit, dan review manusia.
+Without traceability, LLM results will look like a demo. With traceability,
+the results are more suitable for documentation, auditing, and human review.
 
 ---
 
 ## LLM Backend Architecture
 
-Backend model harus pluggable dan tidak mengubah pipeline inti.
+The model backend must be pluggable and not alter the core pipeline.
 
 ```python
 class LLMBackend(ABC):
@@ -332,104 +332,103 @@ class LLMBackend(ABC):
         raise NotImplementedError
 ```
 
-Implementasi target:
+Target implementations:
 
 - `OpenAIBackend`
 - `ClaudeBackend`
 - `OllamaBackend`
 - `LocalModelBackend`
 
-Catatan:
+Notes:
 
-- Static analysis tidak boleh bergantung pada backend ini.
-- Jika tidak ada backend LLM, artifact static analysis harus tetap dihasilkan.
+- Static analysis must not depend on this backend.
+- If no LLM backend is available, static analysis artifacts must still be produced.
 
 ---
 
 ## Governance And Safe Integration
 
-Untuk fintech dan bank, explain pipeline tidak cukup hanya "bisa jalan".
-Pipeline juga harus menjawab:
+For fintech and banks, an explain pipeline is not enough if it just "works".
+The pipeline must also answer:
 
-- model apa yang dipakai?
-- data seberapa sensitif?
-- apakah prompt ke cloud sudah di-redact?
-- siapa yang menjalankan run ini?
-- berapa token yang terpakai?
+- what model was used?
+- how sensitive is the data?
+- has the prompt to the cloud been redacted?
+- who executed this run?
+- how many tokens were consumed?
 
-Karena itu, arsitektur sekarang menambahkan dua lapisan governance ringan:
+For this reason, the architecture now adds two lightweight governance layers:
 
-1. `governance` summary di `manifest.json`
-2. `logs/audit_events.jsonl` sebagai event trail per run
+1. `governance` summary in `manifest.json`
+2. `logs/audit_events.jsonl` as a per-run event trail
 
-Tujuannya bukan menggantikan SIEM atau audit DB perusahaan, tetapi menyediakan
-source-of-truth teknis dari tool ini yang nanti bisa di-forward ke sistem mereka.
+The goal is not to replace a corporate SIEM or audit database, but to provide
+a technical source-of-truth from this tool that can later be forwarded to their systems.
 
 ### Audit Log Ownership
 
-Audit log tool ini mencatat hal yang biasanya tidak ada di audit log bisnis
-perusahaan:
+This tool's audit log records things that typically do not exist in corporate
+business audit logs:
 
-- backend dan model yang dipakai
-- success/failure tiap explain step
-- sensitivity hasil klasifikasi artifact
-- redaction yang diterapkan
+- backend and model used
+- success/failure of each explain step
+- sensitivity classification of artifacts
+- redactions applied
 - token usage per run
 
-Jika perusahaan ingin menyimpan semuanya di DB atau logging stack mereka, source
-ini bisa di-forward. Tetapi event teknis sebaiknya tetap dihasilkan oleh tool.
+If a company wants to store everything in their DB or logging stack, this source
+can be forwarded. However, technical events should still be produced by the tool.
 
 ### Sensitivity And Prompt Redaction
 
-Sebelum prompt dikirim ke backend cloud, artifact AST bisa diklasifikasikan
-menjadi:
+Before a prompt is sent to a cloud backend, AST artifacts can be classified as:
 
 - `low`
 - `moderate`
 - `high`
 - `restricted`
 
-Untuk workload `high` dan `restricted`, prompt cloud sebaiknya melalui redaction
-helper. Ini bukan solusi DLP yang sempurna, tetapi cukup menjadi pagar awal
-supaya integrasi tidak "langsung kirim apa saja ke API".
+For `high` and `restricted` workloads, cloud prompts should go through a redaction
+helper. This is not a perfect DLP solution, but it serves as an initial guardrail
+so the integration does not "just send everything to the API".
 
 ### Model Registry And Presets
 
-Approved model registry dipakai untuk mencegah backend/model dipilih secara liar.
-Preset awal yang disediakan:
+An approved model registry is used to prevent backends/models from being chosen
+arbitrarily. Initial presets provided:
 
 - `fast`
 - `balanced`
 - `audit`
 - `local-only`
 
-Preset ini adalah fondasi untuk policy routing di fase berikutnya. Tujuannya:
+These presets are the foundation for policy routing in the next phase. Their purpose:
 
-- cloud untuk workload non-sensitif
-- local/on-prem untuk workload sensitif
-- approval model lebih mudah diaudit
+- cloud for non-sensitive workloads
+- local/on-prem for sensitive workloads
+- model approval easier to audit
 
-Registry ini sekarang bisa dibaca dari `config/llm_policy.json` atau path JSON
-lain yang diberikan saat runtime, supaya tiap deployment punya approval policy
-sendiri tanpa mengubah source code.
+This registry can now be read from `config/llm_policy.json` or another JSON path
+provided at runtime, so each deployment has its own approval policy without
+modifying source code.
 
 ### Strict Policy And Token Budget
 
-Warning saja tidak cukup untuk lingkungan regulated. Karena itu explain pipeline
-sekarang bisa dijalankan dalam strict mode:
+Warnings alone are not enough for regulated environments. Therefore the explain pipeline
+can now be run in strict mode:
 
-- jika artifact sensitif diarahkan ke backend cloud, request bisa diblok
-- jika model tidak termasuk approved registry deployment, request bisa diblok
-- token usage per explain run bisa dibatasi agar cost tidak lepas kontrol
+- if a sensitive artifact is routed to a cloud backend, the request can be blocked
+- if the model is not in the approved registry deployment, the request can be blocked
+- token usage per explain run can be capped so costs do not spiral out of control
 
-Tujuan fitur ini bukan menggantikan platform governance penuh, tetapi memberi
-pagar yang nyata saat tool dipakai di pilot enterprise atau technical review.
+The purpose of this feature is not to replace a full platform governance solution, but to provide
+real guardrails when the tool is used in an enterprise pilot or technical review.
 
 ---
 
 ## On-Premise Deployment
 
-Untuk bank yang tidak bisa mengirim kode ke cloud, deployment baseline adalah:
+For banks that cannot send code to the cloud, the baseline deployment is:
 
 ```text
 Bank Server
@@ -442,76 +441,76 @@ Bank Server
   `-- COBOL source stays inside bank environment
 ```
 
-Yang belum menjadi target MVP:
+Not yet targeted for MVP:
 
 - multi-tenant isolation
-- enterprise auth dan RBAC
+- enterprise auth and RBAC
 - central admin dashboard
 
-Namun arsitektur sengaja dijaga agar fitur-fitur itu bisa ditambahkan nanti di
-atas service layer dan contract yang sudah stabil.
+However, the architecture is intentionally designed so these features can be added later
+on top of the stable service layer and contracts.
 
 ---
 
-## GUI Dan API Positioning
+## GUI And API Positioning
 
 ### CLI-First
 
-CLI adalah antarmuka pertama karena:
+CLI is the first interface because:
 
-- paling cepat memberi value ke developer
-- mudah diintegrasikan ke script dan CI/CD
-- paling mudah diuji
+- it delivers value to developers the fastest
+- easy to integrate into scripts and CI/CD
+- easiest to test
 
 ### API Later
 
-API layak ditambahkan setelah:
+An API is worth adding after:
 
-- manifest dan artifact contract stabil
-- service layer stabil
-- regression test cukup kuat
+- manifest and artifact contracts are stable
+- service layer is stable
+- regression tests are robust enough
 
 ### GUI Later
 
-GUI berguna untuk demo, stakeholder non-teknis, dan browsing artifact, tetapi:
+A GUI is useful for demos, non-technical stakeholders, and artifact browsing, but:
 
-- tidak boleh datang sebelum contract stabil
-- tidak boleh bergantung langsung pada parser internals
-- sebaiknya tetap satu repo dulu sampai interface backend matang
+- it must not come before contracts are stable
+- it must not depend directly on parser internals
+- it should remain in a single repo for now until the backend interface matures
 
 ---
 
 ## Testing Architecture
 
-Testing harus dibagi menjadi beberapa lapisan:
+Testing must be divided into several layers:
 
 ### Parser Corpus Tests
 
-Validasi parser pada sample COBOL lintas sumber dan lintas dialect.
+Validate the parser on COBOL samples across sources and dialects.
 
 ### Contract Tests
 
-Validasi semua output JSON terhadap schema di `contracts/`.
+Validate all JSON output against schemas in `contracts/`.
 
 ### Regression Tests
 
-Commit expected artifact untuk sample penting agar perubahan parser mudah dideteksi.
+Commit expected artifacts for important samples so parser changes are easy to detect.
 
 ### LLM Evaluation
 
-Bandingkan raw LLM vs preprocessing pipeline untuk akurasi, token usage, dan traceability.
+Compare raw LLM vs the preprocessing pipeline for accuracy, token usage, and traceability.
 
 ---
 
 ## Summary
 
-Arsitektur project ini sengaja dioptimalkan untuk urutan berikut:
+This project's architecture is intentionally optimized for the following order:
 
-1. parser yang tervalidasi
-2. output contract yang stabil
-3. service layer yang reusable
-4. LLM yang pluggable
-5. API dan GUI sebagai consumer, bukan pusat logika
+1. a validated parser
+2. stable output contracts
+3. a reusable service layer
+4. a pluggable LLM
+5. API and GUI as consumers, not the center of logic
 
-Dengan urutan ini, project tetap menarik sebagai portfolio AI, tetapi juga
-terlihat seperti software yang benar-benar siap diintegrasikan ke lingkungan perusahaan.
+With this order, the project remains attractive as an AI portfolio piece, while also
+looking like software that is truly ready to be integrated into an enterprise environment.

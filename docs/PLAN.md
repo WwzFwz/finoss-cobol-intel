@@ -2,56 +2,56 @@
 
 ## Vision
 
-Open-source platform yang memungkinkan perusahaan fintech dan bank memahami,
-mendokumentasikan, dan mempersiapkan migrasi sistem COBOL legacy mereka
-menggunakan kombinasi static analysis dan LLM, yang bisa berjalan sepenuhnya
-on-premise tanpa mengirim kode ke server eksternal.
+An open-source platform that enables fintech companies and banks to understand,
+document, and prepare for the migration of their legacy COBOL systems
+using a combination of static analysis and LLM, capable of running entirely
+on-premise without sending code to external servers.
 
 ---
 
 ## Problem Statement
 
-Bank dan fintech dengan sistem COBOL legacy menghadapi tiga masalah utama:
+Banks and fintech companies with legacy COBOL systems face three main problems:
 
-1. **Knowledge loss** - Developer COBOL pensiun, dokumentasi minim, dan pengetahuan sistem hilang.
-2. **Fear of change** - Tidak ada yang tahu dampak perubahan kecil sekalipun.
-3. **Regulatory pressure** - Regulator meminta penjelasan sistem, tetapi bank sulit menjawab cepat.
+1. **Knowledge loss** - COBOL developers are retiring, documentation is minimal, and system knowledge is being lost.
+2. **Fear of change** - No one knows the impact of even the smallest change.
+3. **Regulatory pressure** - Regulators demand system explanations, but banks struggle to respond quickly.
 
-Solusi existing seperti tools enterprise besar atau konsultan sangat mahal.
-Belum ada tool open-source yang benar-benar fokus pada pemahaman dan dokumentasi
-COBOL dengan pendekatan yang aman untuk lingkungan regulated.
+Existing solutions such as large enterprise tools or consultants are very expensive.
+There is no open-source tool that truly focuses on understanding and documenting
+COBOL with an approach that is safe for regulated environments.
 
 ---
 
 ## Core Principle
 
-> LLM hanya sebaik input yang diterimanya.
-> Project ini adalah infrastructure layer yang membuat input itu benar sebelum
-> LLM menyentuhnya.
+> An LLM is only as good as the input it receives.
+> This project is the infrastructure layer that ensures that input is correct before
+> the LLM touches it.
 
 ---
 
 ## MVP Guardrails
 
-Supaya project ini tetap executable dan tidak over-engineered di fase awal:
+To keep this project executable and not over-engineered in the early phases:
 
-- Stabilkan **contract output** sebelum membangun banyak fitur.
-- Validasi **parser strategy** dengan proof of concept kecil, bukan asumsi.
-- Pisahkan **core logic** dari CLI, output formatter, dan backend LLM sejak awal.
-- Gunakan **filesystem artifact layout** yang extensible sebelum menambah database.
-- Tunda **auth, RBAC, multi-user persistence, dan admin enterprise features**
-  sampai ada kebutuhan nyata.
+- Stabilize the **contract output** before building many features.
+- Validate the **parser strategy** with a small proof of concept, not assumptions.
+- Separate **core logic** from CLI, output formatter, and LLM backend from the start.
+- Use an extensible **filesystem artifact layout** before adding a database.
+- Defer **auth, RBAC, multi-user persistence, and admin enterprise features**
+  until there is a real need.
 
 ---
 
 ## Package Structure
 
-Struktur paket harus dikunci sebelum coding supaya CLI, API, dan GUI nanti bisa
-memakai fondasi yang sama.
+The package structure must be locked before coding so that CLI, API, and GUI can
+later use the same foundation.
 
 ```text
 src/cobol_intel/
-+-- core/         # domain models dan orchestration yang bebas dari UI
++-- core/         # domain models and orchestration free from UI
 +-- contracts/    # Pydantic schemas, schema versioning, manifest
 +-- parsers/      # COBOL parser, preprocessor, COPYBOOK resolver
 +-- analysis/     # graph builder, rules extractor, impact analysis
@@ -61,44 +61,44 @@ src/cobol_intel/
 `-- cli/          # command-line entrypoints
 ```
 
-Aturan boundary:
+Boundary rules:
 
-- `core` dan `contracts` tidak boleh import dari `cli`.
-- `analysis` dan `parsers` tidak boleh bergantung pada backend LLM.
-- `cli` hanya memanggil `service`, tidak menyimpan business logic.
-- GUI atau API nanti harus menjadi consumer dari `service` dan `contracts`,
-  bukan mengakses internals secara liar.
+- `core` and `contracts` must not import from `cli`.
+- `analysis` and `parsers` must not depend on the LLM backend.
+- `cli` only calls `service` and does not hold business logic.
+- GUI or API must later become consumers of `service` and `contracts`,
+  not access internals arbitrarily.
 
 ---
 
 ## Output Contracts And Artifact Layout
 
-Sebelum integrasi API atau GUI dibangun, project ini harus punya kontrak output
-yang stabil.
+Before API or GUI integration is built, this project must have stable output
+contracts.
 
 ### Contract Principles
 
-- Semua artifact JSON wajib memiliki `schema_version`.
-- Semua run wajib memiliki `run_id`, `created_at`, `status`, dan `tool_version`.
-- Output harus backward-conscious. Perubahan shape besar harus menaikkan schema version.
-- Contract disimpan di `contracts/` dan divalidasi lewat automated tests.
+- All JSON artifacts must have a `schema_version`.
+- All runs must have a `run_id`, `created_at`, `status`, and `tool_version`.
+- Output must be backward-conscious. Major shape changes must increment the schema version.
+- Contracts are stored in `contracts/` and validated through automated tests.
 
 ### Job Lifecycle
 
-Minimal lifecycle untuk semua execution:
+Minimum lifecycle for all executions:
 
 ```text
 queued -> running -> completed
 queued -> running -> failed
 ```
 
-Status ini dipakai lebih dulu di CLI manifest dan artifact metadata. Nanti
-status yang sama bisa dipakai ulang oleh API dan GUI.
+These statuses are used first in CLI manifest and artifact metadata. Later,
+the same statuses can be reused by API and GUI.
 
 ### Artifact Directory Layout
 
-Untuk MVP, persistence penuh ke database belum wajib. Sebagai gantinya, setiap
-analysis run ditulis ke filesystem dengan layout yang stabil:
+For MVP, full database persistence is not required. Instead, each
+analysis run is written to the filesystem with a stable layout:
 
 ```text
 artifacts/
@@ -119,7 +119,7 @@ artifacts/
             `-- pipeline.log
 ```
 
-`manifest.json` minimal berisi:
+`manifest.json` must contain at minimum:
 
 - `schema_version`
 - `run_id`
@@ -132,64 +132,64 @@ artifacts/
 - `warnings`
 - `errors`
 
-Layout ini sengaja dipilih supaya nanti mudah dipetakan ke object storage atau
-database tanpa mengubah struktur logical artifact.
+This layout was deliberately chosen so that it can later be easily mapped to object storage or
+a database without changing the logical artifact structure.
 
 ---
 
-## Modul Utama
+## Core Modules
 
-### Modul 1 - COBOL Parser And AST Builder
+### Module 1 - COBOL Parser And AST Builder
 
-**Tujuan**: Pahami struktur COBOL secara programatik, bukan tebak-tebakan.
+**Goal**: Understand COBOL structure programmatically, not through guesswork.
 
-Input: file `.cbl`, `.cob`, `.cobol`
-Output: Abstract Syntax Tree (AST) terstruktur dalam JSON
+Input: `.cbl`, `.cob`, `.cobol` files
+Output: Structured Abstract Syntax Tree (AST) in JSON
 
-Yang harus di-handle:
+What must be handled:
 
 - IDENTIFICATION, ENVIRONMENT, DATA, PROCEDURE DIVISION
 - WORKING-STORAGE SECTION, FILE SECTION, LINKAGE SECTION
-- Tipe data COBOL: PIC, COMP, COMP-3, COMP-5
+- COBOL data types: PIC, COMP, COMP-3, COMP-5
 - OCCURS, REDEFINES, FILLER
 - Fixed-format vs free-format COBOL
 
-Catatan penting:
+Important notes:
 
-- Pilihan parser tidak boleh dikunci hanya dari opini.
-- Fase 0 harus menjalankan PoC kecil untuk `lark` dan `ANTLR4` pada sample
-  COBOL nyata sebelum keputusan akhir dibuat.
+- The parser choice must not be locked based on opinion alone.
+- Phase 0 must run a small PoC for `lark` and `ANTLR4` on real COBOL samples
+  before a final decision is made.
 
 ---
 
-### Modul 2 - COPYBOOK And Dependency Resolver
+### Module 2 - COPYBOOK And Dependency Resolver
 
-**Tujuan**: Resolve semua external dependency sebelum analisis.
+**Goal**: Resolve all external dependencies before analysis.
 
-Input: AST + direktori COPYBOOK
-Output: AST yang sudah fully resolved, dependency graph antar file
+Input: AST + COPYBOOK directory
+Output: Fully resolved AST, inter-file dependency graph
 
-Yang harus di-handle:
+What must be handled:
 
 - `COPY` statement resolution
-- `CALL` statement mapping untuk static calls
+- `CALL` statement mapping for static calls
 - Circular dependency detection
 - Missing COPYBOOK warning
 
 ---
 
-### Modul 3 - Business Rules Extractor
+### Module 3 - Business Rules Extractor
 
-**Tujuan**: Ekstrak kondisi bisnis dari PROCEDURE DIVISION menjadi format yang
-bisa dibaca manusia.
+**Goal**: Extract business conditions from the PROCEDURE DIVISION into a
+human-readable format.
 
 Input: resolved AST
-Output: decision table dan rule list dalam format JSON dan Markdown
+Output: Decision table and rule list in JSON and Markdown format
 
-Contoh output:
+Example output:
 
 ```text
-Rule #12: Premium rate berlaku jika:
+Rule #12: Premium rate applies if:
   - Account type = SAVINGS
   - Balance > 10,000
   - Tenure >= 2 years
@@ -198,72 +198,71 @@ Source: CALCINT.cbl, line 247-263
 
 ---
 
-### Modul 4 - Dependency And Call Graph Builder
+### Module 4 - Dependency And Call Graph Builder
 
-**Tujuan**: Peta lengkap hubungan antar program.
+**Goal**: Complete map of relationships between programs.
 
-Input: kumpulan file COBOL dalam satu project
-Output: visual graph dalam Mermaid/Graphviz dan adjacency list JSON
+Input: collection of COBOL files in a single project
+Output: Visual graph in Mermaid/Graphviz and adjacency list JSON
 
-Yang divisualisasikan:
+What is visualized:
 
-- `CALL` antar program
-- `COPY` untuk shared data structure
-- Shared files melalui `SELECT` dan `ASSIGN`
-
----
-
-### Modul 5 - LLM Explanation Engine
-
-**Tujuan**: Generate penjelasan bahasa natural yang akurat dari AST yang sudah
-bersih.
-
-Input: resolved AST + business rules + call graph, bukan raw COBOL
-Output: penjelasan plain English, dokumentasi teknis, dan ringkasan untuk bisnis
-
-Mode:
-
-- `--mode technical` untuk developer
-- `--mode business` untuk stakeholder non-teknis
-- `--mode audit` untuk kebutuhan compliance
-
-Model yang didukung secara pluggable:
-
-- Claude API / OpenAI API untuk development dan testing
-- Ollama + local model untuk lingkungan on-premise
-- Fine-tuned COBOL model sebagai target jangka panjang
-
-Catatan MVP:
-
-- LLM tidak wajib untuk semua command.
-- Static analysis pipeline harus tetap berguna walaupun backend LLM tidak tersedia.
-- Semua output LLM harus bisa ditrace ke artifact static analysis yang menjadi sumbernya.
+- `CALL` between programs
+- `COPY` for shared data structures
+- Shared files via `SELECT` and `ASSIGN`
 
 ---
 
-### Modul 6 - Documentation Generator
+### Module 5 - LLM Explanation Engine
 
-**Tujuan**: Auto-generate dokumentasi lengkap dari codebase COBOL.
+**Goal**: Generate accurate natural language explanations from a clean AST.
+
+Input: resolved AST + business rules + call graph, not raw COBOL
+Output: Plain English explanations, technical documentation, and business summaries
+
+Modes:
+
+- `--mode technical` for developers
+- `--mode business` for non-technical stakeholders
+- `--mode audit` for compliance needs
+
+Pluggable supported models:
+
+- Claude API / OpenAI API for development and testing
+- Ollama + local model for on-premise environments
+- Fine-tuned COBOL model as a long-term target
+
+MVP notes:
+
+- LLM is not required for all commands.
+- The static analysis pipeline must remain useful even when the LLM backend is unavailable.
+- All LLM output must be traceable to the static analysis artifact that served as its source.
+
+---
+
+### Module 6 - Documentation Generator
+
+**Goal**: Auto-generate complete documentation from the COBOL codebase.
 
 Output per program:
 
-- Deskripsi fungsi
-- Data dictionary untuk setiap field
+- Function description
+- Data dictionary for each field
 - Input/output specification
-- Business rules yang ditemukan
+- Discovered business rules
 - Dependency list
-- Flow diagram dalam Mermaid
+- Flow diagram in Mermaid
 
 Output format: Markdown, HTML, JSON
 
 ---
 
-### Modul 7 - Change Impact Analyzer
+### Module 7 - Change Impact Analyzer
 
-**Tujuan**: Jawab pertanyaan "kalau saya ubah X, apa yang terpengaruh?"
+**Goal**: Answer the question "if I change X, what is affected?"
 
-Input: field name, kondisi, atau program name + full codebase graph
-Output: daftar program, rule, dan field yang terpengaruh beserta risk level
+Input: field name, condition, or program name + full codebase graph
+Output: List of affected programs, rules, and fields along with risk level
 
 ---
 
@@ -298,188 +297,188 @@ Service Layer
 
 ## Integration Strategy
 
-Project ini didesain supaya integrasi perusahaan bisa dilakukan bertahap tanpa
-memaksa kita membangun full platform sejak hari pertama.
+This project is designed so that enterprise integration can be done incrementally without
+forcing us to build a full platform from day one.
 
-Prinsip integrasi:
+Integration principles:
 
-- CLI adalah **client pertama** dari service layer, bukan pusat business logic.
-- Kontrak utama untuk integrasi awal adalah **JSON artifact + manifest**, bukan web dashboard.
-- API layer boleh ditambahkan setelah contract output dan service layer stabil.
-- GUI adalah consumer opsional dan tidak boleh mendikte desain core pipeline.
+- CLI is the **first client** of the service layer, not the center of business logic.
+- The primary contract for early integration is **JSON artifact + manifest**, not a web dashboard.
+- An API layer may be added after the contract output and service layer are stable.
+- GUI is an optional consumer and must not dictate the design of the core pipeline.
 
 ### GUI Strategy
 
-GUI boleh dibuat nanti, tetapi:
+GUI may be built later, but:
 
-- Bukan prioritas Fase 0 atau Fase 1
-- Sebaiknya tetap satu repo dulu sampai `contracts` dan `service` stabil
-- Jika suatu saat dipisah repo, GUI harus mengonsumsi contract yang versioned,
-  bukan mengimpor internal module secara langsung
+- It is not a priority for Phase 0 or Phase 1
+- It should remain in one repo until `contracts` and `service` are stable
+- If the repo is ever split, GUI must consume versioned contracts,
+  not import internal modules directly
 
 ---
 
 ## Tech Stack
 
-| Komponen | Teknologi |
+| Component | Technology |
 |---|---|
 | Language | Python 3.11+ |
-| COBOL Parser | `lark` atau `antlr4-python3-runtime` |
+| COBOL Parser | `lark` or `antlr4-python3-runtime` |
 | Graph | `networkx` + `graphviz` / Mermaid |
 | LLM Interface | `anthropic`, `openai`, `ollama` |
 | Contract Validation | `pydantic` |
-| CLI | `click` atau `typer` |
+| CLI | `click` or `typer` |
 | Output | Markdown, JSON, HTML |
-| Testing | `pytest` + corpus COBOL sample |
+| Testing | `pytest` + COBOL sample corpus |
 | Packaging | `pip` installable, Docker image |
 
 ---
 
-## Fase Pengembangan
+## Development Phases
 
-### Fase 0 - Fondasi (Minggu 1-2)
+### Phase 0 - Foundation (Week 1-2)
 
-- [x] Setup project structure dan environment
-- [x] Kunci package structure: `core`, `contracts`, `parsers`, `analysis`,
+- [x] Setup project structure and environment
+- [x] Lock package structure: `core`, `contracts`, `parsers`, `analysis`,
       `llm`, `outputs`, `service`, `cli`
-- [x] Definisikan schema output awal: `manifest`, `ast`, `dependency_graph`,
+- [x] Define initial output schemas: `manifest`, `ast`, `dependency_graph`,
       `business_rules`
-- [x] Tentukan versioning strategy untuk semua artifact JSON (`schema_version`)
-- [x] Tentukan artifact directory layout untuk setiap analysis run
-- [x] Kumpulkan dataset COBOL sample dari Open Mainframe Project, IBM, Rosetta,
-      dan sample fixed-format
-- [x] Buat corpus parser awal: minimal 3-4 sample COBOL realistis dari sumber berbeda
-- [x] Buat PoC parser dengan `lark`
-- [x] Buat PoC parser dengan `ANTLR4` COBOL grammar
-- [x] Bandingkan hasil PoC dan lock parser approach
-- [x] Basic AST output untuk program sederhana
-- [x] Manifest run pertama yang valid terhadap schema
+- [x] Determine versioning strategy for all JSON artifacts (`schema_version`)
+- [x] Determine artifact directory layout for each analysis run
+- [x] Collect COBOL sample datasets from Open Mainframe Project, IBM, Rosetta,
+      and fixed-format samples
+- [x] Create initial parser corpus: at least 3-4 realistic COBOL samples from different sources
+- [x] Create PoC parser with `lark`
+- [x] Create PoC parser with `ANTLR4` COBOL grammar
+- [x] Compare PoC results and lock parser approach
+- [x] Basic AST output for simple programs
+- [x] First manifest run valid against schema
 
-### Fase 1 - Static Analysis Core (Minggu 3-5)
+### Phase 1 - Static Analysis Core (Week 3-5)
 
-- [x] Parser lengkap untuk division dan section utama
+- [x] Complete parser for main divisions and sections
 - [x] Handle fixed-format preprocessing
 - [x] COPYBOOK resolver
-- [x] Deteksi circular dependency antar COPYBOOK
+- [x] Circular dependency detection between COPYBOOKs
 - [x] Call graph builder
-- [x] Business rules extractor untuk kondisi `IF` dan `EVALUATE`
+- [x] Business rules extractor for `IF` and `EVALUATE` conditions
 - [x] Basic dependency graph visualization
-- [x] JSON artifact writer yang konsisten ke artifact directory
-- [x] Contract tests untuk semua output JSON
-- [x] Corpus test suite: minimal 10 program COBOL
-- [x] Regression tests untuk sample corpus
+- [x] Consistent JSON artifact writer to artifact directory
+- [x] Contract tests for all JSON output
+- [x] Corpus test suite: at least 10 COBOL programs
+- [x] Regression tests for sample corpus
 
-### Fase 2 - LLM Integration (Minggu 6-8)
+### Phase 2 - LLM Integration (Week 6-8)
 
-- [x] `service` orchestration untuk menjalankan pipeline end-to-end
-- [x] Context builder dari AST ke prompt yang siap untuk LLM
-- [x] Smart chunking untuk program besar
+- [x] `service` orchestration to run the pipeline end-to-end
+- [x] Context builder from AST to LLM-ready prompts
+- [x] Smart chunking for large programs
 - [x] Pluggable model interface
-- [x] Explanation engine untuk technical mode
-- [x] Explanation engine untuk business mode
-- [x] Traceability: output LLM menunjuk ke source artifact dan lokasi program
+- [x] Explanation engine for technical mode
+- [x] Explanation engine for business mode
+- [x] Traceability: LLM output points to source artifact and program location
 
-### Fase 3 - Output, Governance, And Integration (Minggu 9-10)
+### Phase 3 - Output, Governance, And Integration (Week 9-10)
 
-- [x] Audit/event log artifact (`logs/audit_events.jsonl`) untuk analysis dan explain runs
-- [x] Governance summary pada `manifest.json` untuk sensitivity, deployment tier, dan token usage
-- [x] Approved model registry + preset helpers untuk backend LLM
-- [x] Sensitivity classification helper untuk artifact COBOL
-- [x] Redaction helper untuk prompt cloud pada workload sensitif
-- [x] Retry / timeout policy dasar per backend
+- [x] Audit/event log artifact (`logs/audit_events.jsonl`) for analysis and explain runs
+- [x] Governance summary in `manifest.json` for sensitivity, deployment tier, and token usage
+- [x] Approved model registry + preset helpers for LLM backend
+- [x] Sensitivity classification helper for COBOL artifacts
+- [x] Redaction helper for cloud prompts on sensitive workloads
+- [x] Basic retry / timeout policy per backend
 - [x] Token budget per explain run
-- [x] Strict policy enforcement untuk workload sensitif pada backend cloud
+- [x] Strict policy enforcement for sensitive workloads on cloud backends
 - [x] Configurable policy registry via JSON config
-- [x] Documentation generator untuk Markdown
+- [x] Documentation generator for Markdown
 - [x] Change impact analyzer
 - [x] HTML report generator
 - [x] Deep analysis: CFG builder, data flow, dead code detection, reference indexer
 - [x] CLI polishing (--version, help text, command docs)
-- [x] CHANGELOG.md dan versioning (0.3.0)
+- [x] CHANGELOG.md and versioning (0.3.0)
 - [x] Docker image hardened (multi-stage, non-root, health check)
-- [x] README comprehensive
-- [x] Optional read-only API prototype untuk consume artifact
-- [ ] Output directory dan artifact browsing yang lebih rapi
-- [ ] Finalisasi layout agar siap dikonsumsi GUI nanti
+- [x] Comprehensive README
+- [x] Optional read-only API prototype to consume artifacts
+- [ ] Cleaner output directory and artifact browsing
+- [ ] Finalize layout to be ready for GUI consumption later
 
-### Fase 4 - Fine-Tuning Infrastructure And Packaging (Minggu 11-12+)
+### Phase 4 - Fine-Tuning Infrastructure And Packaging (Week 11-12+)
 
 - [x] Prompt comparison benchmark (`raw source` vs `structured pipeline`)
 - [x] Fine-tuning dataset builder (Alpaca + ShareGPT format)
 - [x] LoRA/PEFT fine-tuning script (CodeLlama-7B compatible)
 - [x] Local fine-tuned model backend adapter
-- [x] Optional extras untuk `.[local]` dan `.[train]`
-- [x] Deterministic default untuk offline local inference
+- [x] Optional extras for `.[local]` and `.[train]`
+- [x] Deterministic default for offline local inference
 - [x] PyPI build verification (wheel + sdist + py.typed)
-- [x] Docker image untuk on-premise deployment
-- [x] Run fine-tuning pada GPU compute (QLoRA CodeLlama-7B on Colab T4)
-- [x] Publish model ke HuggingFace (WwzFwz/cobol-explain-7b)
-- [x] Publish package ke PyPI (v0.3.0, v0.3.1)
+- [x] Docker image for on-premise deployment
+- [x] Run fine-tuning on GPU compute (QLoRA CodeLlama-7B on Colab T4)
+- [x] Publish model to HuggingFace (WwzFwz/cobol-explain-7b)
+- [x] Publish package to PyPI (v0.3.0, v0.3.1)
 - [x] Comprehensive test suite (331 tests, 91% coverage, CI coverage gate)
 
 ---
 
-## Metrik Keberhasilan
+## Success Metrics
 
-- Parse success rate pada corpus sample lintas sumber
-- Accuracy business rules extraction vs manual review
-- Waktu analisis per 1000 baris COBOL
-- Jumlah token yang dihemat vs mengirim raw COBOL ke API
-- Kemampuan handle COPYBOOK dan nested call chains
-- Bisa jalan fully offline dengan local model
-- Semua artifact JSON valid terhadap schema version yang aktif
-- Output run bisa dikonsumsi ulang tanpa menjalankan parser lagi
+- Parse success rate on sample corpus across sources
+- Business rules extraction accuracy vs manual review
+- Analysis time per 1000 lines of COBOL
+- Number of tokens saved vs sending raw COBOL to the API
+- Ability to handle COPYBOOKs and nested call chains
+- Can run fully offline with a local model
+- All JSON artifacts valid against the active schema version
+- Run output can be re-consumed without running the parser again
 
 ---
 
 ## Testing Strategy
 
-Testing plan untuk MVP harus konkret dan otomatis.
+The testing plan for MVP must be concrete and automated.
 
 ### 1. Dialect Corpus Tests
 
-- Minimal 10 program COBOL dari beberapa sumber: IBM, Open Mainframe Project,
-  Rosetta Code, dan sample fixed-format
-- Parser harus diuji pada variasi fixed-format, free-format, `COPY`, `CALL`,
-  `COMP-3`, `REDEFINES`, dan `OCCURS`
-- Setiap sample diberi label capability apa saja yang di-cover
+- At least 10 COBOL programs from multiple sources: IBM, Open Mainframe Project,
+  Rosetta Code, and fixed-format samples
+- Parser must be tested on variations of fixed-format, free-format, `COPY`, `CALL`,
+  `COMP-3`, `REDEFINES`, and `OCCURS`
+- Each sample is labeled with the capabilities it covers
 
 ### 2. Contract Tests
 
-- Setiap artifact JSON harus lolos validasi schema di `contracts/`
-- `manifest.json` wajib selalu valid walaupun run gagal
-- Perubahan shape output tanpa update schema harus dianggap gagal
+- Every JSON artifact must pass schema validation in `contracts/`
+- `manifest.json` must always be valid even when a run fails
+- Output shape changes without a schema update must be treated as a failure
 
 ### 3. Regression Tests
 
-- Untuk sample program utama, expected output di-commit ke repo
-- Jika AST, rules, atau graph berubah, test harus memperlihatkan diff yang jelas
-- Regression test dipakai untuk mencegah refactor parser merusak output lama
+- For main sample programs, expected output is committed to the repo
+- If AST, rules, or graph change, the test must show a clear diff
+- Regression tests are used to prevent parser refactors from breaking previous output
 
 ### 4. LLM Evaluation Tests
 
-- Bandingkan output raw LLM vs output dengan preprocessing
-- Ukur akurasi, token usage, dan traceability
-- LLM test tidak boleh menjadi satu-satunya bukti bahwa pipeline bekerja
+- Compare raw LLM output vs output with preprocessing
+- Measure accuracy, token usage, and traceability
+- LLM tests must not be the sole evidence that the pipeline works
 
 ---
 
-## Out Of Scope Untuk MVP
+## Out Of Scope For MVP
 
-Hal-hal ini penting, tetapi tidak perlu dibangun sekarang:
+These items are important, but do not need to be built now:
 
-- Multi-user project persistence penuh
-- RBAC dan auth enterprise
-- Full auth, RBAC, dan approval workflow tingkat platform
-- GUI interaktif penuh
-- Fine-tuned model produksi
-- Dynamic `CALL` resolution yang sempurna untuk semua kasus
+- Full multi-user project persistence
+- Enterprise RBAC and auth
+- Full auth, RBAC, and platform-level approval workflow
+- Full interactive GUI
+- Production fine-tuned model
+- Perfect dynamic `CALL` resolution for all cases
 
 ---
 
-## Dataset Untuk Development And Testing
+## Dataset For Development And Testing
 
 - [Open Mainframe Project - COBOL Programming Course](https://github.com/openmainframeproject/cobol-programming-course)
 - [IBM COBOL Samples](https://github.com/IBM/IBM-Z-zOS)
 - [Rosetta Code - COBOL](https://rosettacode.org/wiki/Category:COBOL)
-- COBOL programs dari academic papers yang tersedia publik
+- COBOL programs from publicly available academic papers
