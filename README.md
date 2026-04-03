@@ -200,6 +200,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full dev setup and guidelines.
 - [Project Plan](docs/PLAN.md)
 - [Progress](docs/PROGRESS.md)
 - [Changelog](CHANGELOG.md)
+- [Security Policy](SECURITY.md)
+- [Support](SUPPORT.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ## License
 

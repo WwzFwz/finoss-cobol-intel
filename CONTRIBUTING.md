@@ -4,13 +4,13 @@
 
 ```bash
 # Clone the repo
-git clone https://github.com/YOUR_USERNAME/llm-cobol-bussiness.git
-cd llm-cobol-bussiness
+git clone https://github.com/WwzFwz/cobol-intel.git
+cd cobol-intel
 
 # Create virtual environment
 python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-# .venv\Scripts\activate   # Windows
+source .venv/bin/activate  # Linux / macOS
+# .\.venv\Scripts\activate  # Windows PowerShell
 
 # Install with dev + api dependencies
 pip install -e ".[api,dev]"
@@ -35,7 +35,7 @@ pytest tests/evaluation/
 ## Linting
 
 ```bash
-ruff check src/ tests/
+ruff check src/ tests/ tools/
 ```
 
 ## Module Boundaries
@@ -59,6 +59,11 @@ Key rules:
 - `contracts` and `core` must never import from `cli` or `api`
 - `analysis` and `parsers` must not depend on LLM backends
 - `cli` and `api` only call `service`, never access internals directly
+
+## Security Reports
+
+Please do not use public issues for security-sensitive reports. Follow
+[SECURITY.md](SECURITY.md).
 
 ## Pull Request Process
 
